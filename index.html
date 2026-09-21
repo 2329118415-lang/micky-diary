@@ -144,8 +144,8 @@ createApp({
       tip: '',
       compressing: false,
       showSync: false,
-      sync: { owner: '', repo: 'micky-diary-data', file: 'diary.json', token: '' },
-      form2: { owner: '', repo: 'micky-diary-data', file: 'diary.json', token: '' },
+      sync: { owner: '2329118415-lang', repo: 'micky-diary-data', file: 'diary.json', token: '' },
+      form2: { owner: '2329118415-lang', repo: 'micky-diary-data', file: 'diary.json', token: '' },
       remoteSha: null,
       syncMsg: '未开启同步',
       form: { date: '', title: '', content: '', mood: '开心', weather: '晴', photo: '' },
@@ -292,7 +292,7 @@ createApp({
       await this.syncNow();
     },
     disableSync() {
-      this.sync = { owner: '', repo: 'micky-diary-data', file: 'diary.json', token: '' };
+      this.sync = { owner: '2329118415-lang', repo: 'micky-diary-data', file: 'diary.json', token: '' };
       this.form2 = Object.assign({}, this.sync);
       localStorage.removeItem(SYNC_KEY);
       this.remoteSha = null;
