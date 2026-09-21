@@ -140,6 +140,7 @@
       <button class="primary" @click="enableSync" style="margin-left:10px;">保存并开始同步</button>
       <button v-if="syncReady" @click="disableSync" style="margin-left:10px;">断开同步</button>
       <p class="status">令牌只保存在这台设备的浏览器里，不会写进网页源码。第一次建议先点「检测密钥」，看到 ✅ 再保存。</p>
+      <p class="status">如果提示 404：<a href="https://github.com/settings/tokens?type=beta" target="_blank">打开我的 Fine-grained tokens</a>，进入你用的那个令牌，把 micky-diary-data 勾进 Repository access，并把 Contents 设为 Read and write，然后回这里重新点「检测密钥」。</p>
     </section>
 
     <section class="editor">
@@ -367,7 +368,7 @@ createApp({
         let hint = '';
         if (res.status === 401) hint = '密钥无效（401 Bad credentials）：多为没粘贴上、复制不完整、带了空格/换行，或密钥已被删除或过期，请重新生成一个再试';
         else if (res.status === 403) hint = '权限不足（403）：把 Repository permissions → Contents 改成 Read and write 后重新生成密钥';
-        else if (res.status === 404) hint = '找不到仓库（404）：确认仓库名是 micky-diary-data，并且密钥的 Repository access 里勾选了它';
+        else if (res.status === 404) hint = '找不到仓库（404）：GitHub 对没有权限的私有仓库统一返回 404。请到 GitHub → Settings → Developer settings → Fine-grained tokens → 打开你用的那个令牌 → Repository access 勾上 micky-diary-data，并把 Contents 设为 Read and write';
         else hint = 'HTTP ' + res.status + ' ' + (await res.text()).slice(0, 120);
         const err = new Error(hint);
         err.status = res.status;
@@ -484,11 +485,13 @@ createApp({
         this.syncMsg = '⚠️ 这串不像 GitHub 令牌（应以 github_pat_ 或 ghp_ 开头，当前长度 ' + this.form2.token.length + ' 个字符），请确认复制的是令牌本身，不是令牌名字';
         return;
       }
+      const previous = Object.assign({}, this.sync);
       this.sync = Object.assign({}, this.form2);
       this.syncMsg = '正在连接…';
       try {
         await this.gh('/repos/' + this.sync.owner + '/' + this.sync.repo);
       } catch (err) {
+        this.sync = previous;
         this.syncMsg = '⚠️ 连接失败：' + err.message;
         return;
       }
