@@ -6,6 +6,10 @@
 <meta name="robots" content="noindex, nofollow, noarchive, noimageindex" />
 <meta name="referrer" content="no-referrer" />
 <meta name="theme-color" content="#f7f8fa" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="生活日记" />
+<link rel="manifest" href="./manifest.webmanifest" />
+<link rel="icon" href="./icon.svg" type="image/svg+xml" />
 <title>Micky的生活日记</title>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <style>
@@ -27,13 +31,9 @@
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html { scroll-behavior: smooth; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: var(--font); font-size: var(--base); line-height: 1.6;
-    transition: background .25s ease, color .25s ease;
-    -webkit-font-smoothing: antialiased;
-  }
-  #app { max-width: 820px; margin: 0 auto; padding: 22px 16px 110px; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: var(--base); line-height: 1.6;
+    transition: background .25s ease, color .25s ease; -webkit-font-smoothing: antialiased; }
+  #app { max-width: 860px; margin: 0 auto; padding: 22px 16px 120px; }
   h1, h2, h3 { line-height: 1.35; }
 
   button { font-family: inherit; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--text);
@@ -46,16 +46,15 @@
   button.ghost { background: transparent; }
   button.small { padding: 7px 13px; font-size: .88em; }
   button.icon { width: 38px; height: 38px; padding: 0; display: grid; place-items: center; font-size: 1em; border-radius: 50%; }
+  button.icon.tiny { width: 30px; height: 30px; font-size: .86em; border-color: transparent; background: transparent; }
+  button.icon.tiny:hover { background: var(--accent-soft); border-color: transparent; }
   button.preset { margin: 0 8px 8px 0; }
   button.chip { padding: 7px 14px; border-radius: 999px; font-size: .92em; }
   button.chip.on { background: var(--accent); border-color: transparent; color: #fff; box-shadow: 0 4px 14px var(--ring); }
 
-  input, textarea, select {
-    font-family: inherit; font-size: 1em; color: var(--text); background: var(--card);
+  input, textarea, select { font-family: inherit; font-size: 1em; color: var(--text); background: var(--card);
     border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 13px; width: 100%;
-    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
-    -webkit-appearance: none; appearance: none;
-  }
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; -webkit-appearance: none; appearance: none; }
   input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--ring); }
   textarea { resize: vertical; line-height: 1.85; }
   input[type='color'] { padding: 3px; height: 40px; width: 62px; cursor: pointer; }
@@ -63,21 +62,44 @@
   select { background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
     background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 34px; }
 
-  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+  .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .topbar h1 { font-size: 1.34em; margin: 0; font-weight: 700; letter-spacing: .2px; }
-  .topbar .sub { font-size: .8em; color: var(--muted); }
-  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .topbar .sub { font-size: .8em; color: var(--muted); margin-top: 2px; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 
-  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 22px; }
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
   .search { position: relative; flex: 1; min-width: 190px; }
   .search input { padding-left: 38px; }
   .search .ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: .55; pointer-events: none; }
-  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: .82em; color: var(--muted);
-    background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; white-space: nowrap; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: .8em; color: var(--muted); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 7px 12px; white-space: nowrap; }
   .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); }
   .dot.ok { background: #34c759; box-shadow: 0 0 0 3px rgba(52, 199, 89, .18); }
   .dot.busy { background: #f0a100; box-shadow: 0 0 0 3px rgba(240, 161, 0, .18); }
   .dot.err { background: #ff453a; box-shadow: 0 0 0 3px rgba(255, 69, 58, .18); }
+
+  .card-block { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px 18px;
+    box-shadow: var(--shadow-sm); margin-bottom: 18px; animation: rise .38s cubic-bezier(.22, 1, .36, 1) both; }
+  .card-block > header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .card-block > header h2 { font-size: .98em; margin: 0; font-weight: 650; }
+
+  .stats { display: flex; gap: 18px; flex-wrap: wrap; margin: 2px 0 12px; }
+  .stat { min-width: 74px; }
+  .stat b { font-size: 1.35em; font-weight: 700; }
+  .stat span { font-size: .78em; color: var(--muted); display: block; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+  .cal-wd { text-align: center; font-size: .72em; color: var(--muted); padding-bottom: 2px; }
+  .cal-cell { position: relative; aspect-ratio: 1 / 1; border-radius: 9px; border: 1px solid transparent; display: grid; place-items: center;
+    font-size: .8em; cursor: pointer; transition: transform .15s ease, border-color .18s ease, box-shadow .18s ease; color: var(--text); }
+  .cal-cell:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .cal-cell.out { opacity: .35; }
+  .cal-cell.today { box-shadow: inset 0 0 0 2px var(--accent); }
+  .cal-cell.on { box-shadow: 0 0 0 2px var(--accent); border-color: var(--accent); }
+  .cal-cell i { position: absolute; bottom: 4px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); }
+
+  .tag-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-size: .78em; color: var(--muted); background: var(--accent-soft); border-radius: 999px; padding: 4px 11px; }
 
   .timeline { padding-left: 22px; border-left: 2px solid var(--line); }
   .timeline.waterfall { padding-left: 0; border-left: none; column-count: 2; column-gap: 16px; }
@@ -85,24 +107,30 @@
   .timeline.waterfall .entry::before { display: none; }
   @media (max-width: 640px) { .timeline.waterfall { column-count: 1; } }
 
-  .entry { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg);
-    padding: 18px 20px; margin-bottom: 16px; box-shadow: var(--shadow-sm);
+  .entry { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px 18px;
+    margin-bottom: 15px; box-shadow: var(--shadow-sm);
     transition: transform .22s cubic-bezier(.22, 1, .36, 1), box-shadow .22s ease, border-color .22s ease;
     animation: rise .38s cubic-bezier(.22, 1, .36, 1) both; }
   @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   @media (hover: hover) { .entry:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(16, 22, 35, .12); border-color: var(--accent); } }
-  .entry::before { content: ''; position: absolute; left: -30px; top: 24px; width: 10px; height: 10px; border-radius: 50%;
+  .entry::before { content: ''; position: absolute; left: -30px; top: 22px; width: 10px; height: 10px; border-radius: 50%;
     background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+  .entry.pinned { border-color: var(--accent); }
+  .entry-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .entry-date { font-size: .8em; color: var(--muted); letter-spacing: .3px; }
-  .entry h3 { font-size: 1.14em; margin: 6px 0 8px; font-weight: 650; }
-  .entry .content { font-size: 1em; line-height: 1.9; white-space: pre-wrap; margin: 0; color: var(--text); opacity: .92; }
-  .entry .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-  .tag { font-size: .78em; color: var(--muted); background: var(--accent-soft); border-radius: 999px; padding: 4px 11px; }
-  .entry img.photo { display: block; margin-top: 12px; width: 100%; max-height: 280px; object-fit: cover; border-radius: var(--radius); }
-  .entry-foot { display: flex; justify-content: flex-end; margin-top: 12px; }
-  .entry-foot button { font-size: .8em; padding: 5px 12px; color: var(--muted); }
+  .entry-actions { display: flex; gap: 2px; opacity: .55; transition: opacity .2s ease; }
+  .entry:hover .entry-actions { opacity: 1; }
+  .entry h3 { font-size: 1.12em; margin: 6px 0 8px; font-weight: 650; }
+  .entry .content { font-size: 1em; line-height: 1.9; white-space: pre-wrap; margin: 0; opacity: .92; }
+  .entry .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 11px; }
+  .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; margin-top: 12px; }
+  .photos.single { grid-template-columns: 1fr; }
+  .photos img { width: 100%; height: 130px; object-fit: cover; border-radius: var(--radius); cursor: zoom-in;
+    transition: transform .22s cubic-bezier(.22, 1, .36, 1), filter .22s ease; }
+  .photos.single img { height: auto; max-height: 320px; }
+  .photos img:hover { transform: scale(1.02); filter: brightness(1.03); }
 
-  .empty { text-align: center; padding: 56px 20px; border: 1px dashed var(--line); border-radius: var(--radius-lg); background: var(--card); }
+  .empty { text-align: center; padding: 50px 20px; border: 1px dashed var(--line); border-radius: var(--radius-lg); background: var(--card); }
   .empty .big { font-size: 2.4em; display: block; margin-bottom: 10px; }
   .empty p { color: var(--muted); margin: 0 0 16px; }
 
@@ -130,18 +158,22 @@
   .field { display: block; margin-bottom: 14px; }
   .field > span { display: block; font-size: .86em; color: var(--muted); margin-bottom: 6px; }
   .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-  .drop { border: 1.5px dashed var(--line); border-radius: var(--radius); padding: 18px; text-align: center; cursor: pointer;
+  .drop { border: 1.5px dashed var(--line); border-radius: var(--radius); padding: 16px; text-align: center; cursor: pointer;
     transition: border-color .2s ease, background .2s ease; }
   .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
-  .drop img { width: 100%; max-height: 220px; object-fit: cover; border-radius: var(--radius); display: block; }
   .drop-hint { color: var(--muted); font-size: .9em; }
   .drop-hint small { opacity: .8; }
+  .edit-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+  .edit-photos .ph { position: relative; }
+  .edit-photos img { width: 100%; height: 92px; object-fit: cover; border-radius: var(--radius); display: block; }
+  .edit-photos .x { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; padding: 0; font-size: .72em;
+    background: rgba(20, 24, 34, .72); color: #fff; border-color: transparent; }
 
   .panel-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
   .panel-row > label { width: 86px; font-size: .88em; color: var(--muted); flex: 0 0 auto; }
   .panel-row > input, .panel-row > select { flex: 1; min-width: 150px; }
   .panel-row > input[type='color'] { flex: 0 0 62px; min-width: 62px; }
-  .panel-hint { font-size: .84em; color: var(--muted); line-height: 1.7; }
+  .panel-hint { font-size: .84em; color: var(--muted); line-height: 1.75; }
   .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
 
   .login-wrap { min-height: 78vh; display: flex; align-items: center; justify-content: center; }
@@ -153,16 +185,18 @@
   .login-card button { width: 100%; margin-top: 12px; }
   .err { color: #e0564a; font-size: .88em; margin: 10px 0 0; }
 
+  .lightbox { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(8, 10, 16, .88); padding: 24px; }
+  .lightbox img { max-width: 92vw; max-height: 86vh; border-radius: var(--radius); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+
   .fade-enter-active, .fade-leave-active { transition: opacity .22s ease; }
   .fade-enter-from, .fade-leave-to { opacity: 0; }
-  .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 80;
-    background: rgba(24, 28, 38, .92); color: #fff; font-size: .88em; padding: 10px 18px; border-radius: 999px;
-    box-shadow: 0 12px 30px rgba(10, 14, 22, .3); backdrop-filter: blur(6px); max-width: 88vw; text-align: center; }
   .pop-enter-active { transition: transform .3s cubic-bezier(.22, 1, .36, 1), opacity .3s ease; }
   .pop-leave-active { transition: transform .18s ease, opacity .18s ease; }
   .pop-enter-from { opacity: 0; transform: translateY(22px) scale(.97); }
   .pop-leave-to { opacity: 0; transform: translateY(10px) scale(.98); }
-
+  .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 95;
+    background: rgba(24, 28, 38, .92); color: #fff; font-size: .88em; padding: 10px 18px; border-radius: 999px;
+    box-shadow: 0 12px 30px rgba(10, 14, 22, .3); backdrop-filter: blur(6px); max-width: 88vw; text-align: center; }
   a { color: var(--accent); }
 </style>
 </head>
@@ -183,10 +217,11 @@
     <header class="topbar">
       <div>
         <h1>{{ theme.title }}</h1>
-        <div class="sub">共 {{ list.length }} 篇 · 最新在最前</div>
+        <div class="sub">共 {{ list.length }} 篇 · 连续记录 {{ streak }} 天 · 本月 {{ monthCount }} 篇</div>
       </div>
       <div class="topbar-actions">
         <button class="icon small" title="样式 DIY" @click="openModal('theme')">🎨</button>
+        <button class="icon small" title="数据与备份" @click="openModal('data')">📦</button>
         <button class="icon small" title="同步设置" @click="openModal('sync')">☁️</button>
         <button class="small" @click="logout">退出</button>
       </div>
@@ -195,33 +230,76 @@
     <div class="toolbar">
       <div class="search">
         <span class="ico">🔍</span>
-        <input v-model="keyword" placeholder="搜索标题、内容、心情、天气" />
+        <input ref="searchInput" v-model="keyword" placeholder="搜索标题、正文、标签（按 / 快速聚焦）" />
       </div>
       <span class="pill"><span class="dot" :class="syncDot"></span>{{ syncMsg }}</span>
       <button class="small" v-if="syncReady" @click="syncNow">{{ syncing ? '同步中…' : '立即同步' }}</button>
     </div>
 
+    <section class="card-block">
+      <header>
+        <h2>📅 {{ monthLabel }}</h2>
+        <div style="display: flex; gap: 6px;">
+          <button class="icon tiny" @click="shiftMonth(-1)" title="上个月">‹</button>
+          <button class="icon tiny" @click="shiftMonth(1)" title="下个月">›</button>
+        </div>
+      </header>
+      <div class="stats">
+        <div class="stat"><b>{{ streak }}</b><span>连续记录（天）</span></div>
+        <div class="stat"><b>{{ monthCount }}</b><span>本月篇数</span></div>
+        <div class="stat"><b>{{ list.length }}</b><span>累计篇数</span></div>
+        <div class="stat"><b>{{ wordsTotal }}</b><span>累计字数</span></div>
+      </div>
+      <div class="cal-grid">
+        <div class="cal-wd" v-for="w in weekdays" :key="w">{{ w }}</div>
+        <div class="cal-cell" v-for="c in monthCells" :key="c.key" :class="{ out: !c.inMonth, today: c.key === todayStr, on: c.key === filterDate }"
+             :style="heatStyle(c.count)" @click="onDayClick(c)">
+          <span>{{ c.day }}</span>
+          <i v-if="c.count"></i>
+        </div>
+      </div>
+      <p class="panel-hint" style="margin: 10px 0 0;">点有记录的日期可以筛选那天的日记，点空白日期可以直接补写那天。</p>
+    </section>
+
+    <section class="card-block" v-if="onThisDay.length">
+      <header><h2>🕰️ 往年今日</h2></header>
+      <div class="tag-row">
+        <span class="tag" v-for="e in onThisDay" :key="e.id">{{ e.date.slice(0, 4) }} 年 · {{ e.title }}</span>
+      </div>
+    </section>
+
+    <div class="toolbar" v-if="tagList.length || filterDate">
+      <span class="pill" v-if="filterDate">只看 {{ filterDate }} <button class="icon tiny" @click="filterDate = ''">✕</button></span>
+      <button class="chip small" :class="{ on: !filterTag }" @click="filterTag = ''" v-if="tagList.length">全部</button>
+      <button class="chip small" v-for="t in tagList" :key="t" :class="{ on: filterTag === t }" @click="filterTag = filterTag === t ? '' : t">#{{ t }}</button>
+    </div>
+
     <main class="timeline" :class="{ waterfall: theme.layout === 'waterfall' }">
       <div class="empty" v-if="filtered.length === 0">
         <span class="big">📔</span>
-        <p v-if="keyword">没有找到和「{{ keyword }}」有关的日记</p>
+        <p v-if="keyword || filterTag || filterDate">没有符合条件的日记，换个条件看看</p>
         <p v-else>还没有日记，写下第一篇吧</p>
-        <button class="primary" v-if="!keyword" @click="openModal('editor')">✍️ 写第一篇日记</button>
+        <button class="primary" v-if="!keyword && !filterTag && !filterDate" @click="openModal('editor')">✍️ 写第一篇日记</button>
       </div>
 
-      <article class="entry" v-for="item in filtered" :key="item.id">
-        <div class="entry-date">📅 {{ item.date }}</div>
+      <article class="entry" v-for="item in filtered" :key="item.id" :class="{ pinned: item.pinned }">
+        <div class="entry-head">
+          <div class="entry-date">📅 {{ item.date }}<span v-if="item.pinned"> · 已置顶</span></div>
+          <div class="entry-actions">
+            <button class="icon tiny" :title="item.pinned ? '取消置顶' : '置顶'" @click="togglePin(item.id)">📌</button>
+            <button class="icon tiny" title="编辑" @click="editEntry(item)">✏️</button>
+            <button class="icon tiny" title="删除" @click="remove(item.id)">🗑️</button>
+          </div>
+        </div>
         <h3>{{ item.title }}</h3>
         <p class="content" v-if="item.content">{{ item.content }}</p>
         <div class="chips">
           <span class="tag" v-if="item.mood">{{ moodEmoji(item.mood) }} {{ item.mood }}</span>
           <span class="tag" v-if="item.weather">{{ weatherEmoji(item.weather) }} {{ item.weather }}</span>
+          <span class="tag" v-for="t in (item.tags || [])" :key="t" style="cursor: pointer;" @click="filterTag = t">#{{ t }}</span>
         </div>
-        <a v-if="item.photo" :href="item.photo" target="_blank" rel="noopener">
-          <img class="photo" :src="item.photo" alt="日记照片" />
-        </a>
-        <div class="entry-foot">
-          <button class="ghost" @click="remove(item.id)">删除</button>
+        <div class="photos" v-if="entryPhotos(item).length" :class="{ single: entryPhotos(item).length === 1 }">
+          <img v-for="(p, i) in entryPhotos(item)" :key="i" :src="p" loading="lazy" alt="日记照片" @click="lightbox = p" />
         </div>
       </article>
     </main>
@@ -230,6 +308,12 @@
 
     <transition name="fade">
       <div class="toast" v-if="toast">{{ toast }}</div>
+    </transition>
+
+    <transition name="fade">
+      <div class="lightbox" v-if="lightbox" @click="lightbox = ''">
+        <img :src="lightbox" alt="查看大图" />
+      </div>
     </transition>
 
     <transition name="fade">
@@ -244,7 +328,7 @@
             <div class="sheet-body" v-if="modal === 'editor'">
               <label class="field"><span>日期</span><input type="date" v-model="form.date" /></label>
               <label class="field"><span>标题</span><input ref="titleInput" v-model="form.title" placeholder="给今天起个名字" /></label>
-              <label class="field"><span>正文</span><textarea v-model="form.content" rows="6" placeholder="今天发生了什么？随便写点…"></textarea></label>
+              <label class="field"><span>正文</span><textarea v-model="form.content" rows="6" placeholder="今天发生了什么？随便写点…（可以用 #标签 归类）"></textarea></label>
               <div class="field">
                 <span>心情</span>
                 <div class="chips">
@@ -258,20 +342,36 @@
                 </div>
               </div>
               <div class="field">
-                <span>照片</span>
+                <span>照片（最多 9 张，可拖进来）</span>
                 <div class="drop" :class="{ over: dragOver }" @click="pickFile" @dragover.prevent="dragOver = true" @dragleave.prevent="dragOver = false" @drop.prevent="onDrop">
-                  <input ref="fileInput" type="file" accept="image/*" hidden @change="pickPhoto" />
-                  <template v-if="!form.photo">
-                    <div class="drop-hint">📷 点击选择照片，或把图片拖进来<br /><small>会自动压缩到长边 1280，同步更快</small></div>
-                  </template>
-                  <template v-else>
-                    <img :src="form.photo" alt="照片预览" />
-                    <button class="ghost small" style="margin-top: 10px;" @click.stop="form.photo = ''">移除照片</button>
-                  </template>
+                  <input ref="fileInput" type="file" accept="image/*" multiple hidden @change="pickPhoto" />
+                  <div class="edit-photos" v-if="form.photos.length">
+                    <div class="ph" v-for="(p, i) in form.photos" :key="i">
+                      <img :src="p" alt="照片预览" />
+                      <button class="x" @click.stop="removePhoto(i)">✕</button>
+                    </div>
+                  </div>
+                  <div class="drop-hint" v-else>📷 点击选择照片，或把图片拖进来<br /><small>会自动压缩到长边 1280，同步更快</small></div>
                 </div>
                 <p class="panel-hint" v-if="compressing">正在压缩照片…</p>
               </div>
               <p class="panel-hint" v-if="tip">{{ tip }}</p>
+              <p class="panel-hint">快捷键：Ctrl / ⌘ + Enter 保存，Esc 关闭</p>
+            </div>
+
+            <div class="sheet-body" v-else-if="modal === 'data'">
+              <p class="panel-hint">日记既存在本机浏览器，也会同步到你的私有仓库。建议偶尔导出一份备份，换设备或清缓存时更安心。</p>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0;">
+                <button class="small" @click="exportJSON">⬇️ 导出完整备份（JSON）</button>
+                <button class="small" @click="exportMarkdown">⬇️ 导出为 Markdown</button>
+                <button class="small" @click="pickImport">⬆️ 导入备份（JSON）</button>
+                <input ref="importInput" type="file" accept="application/json,.json" hidden @change="importJSON" />
+              </div>
+              <div class="panel-hint">
+                <div>· 本机已存：{{ list.length }} 篇，含照片约 {{ localSize }}</div>
+                <div>· 导出 Markdown 时内嵌的本地照片会跳过，需要连照片一起备份请用 JSON</div>
+                <div>· 导入是按日记编号合并，同一条保留更新时间较新的那份，不会覆盖丢失</div>
+              </div>
             </div>
 
             <div class="sheet-body" v-else-if="modal === 'theme'">
@@ -281,7 +381,7 @@
                   <button class="preset small" v-for="p in presets" :key="p.name" @click="applyPreset(p)">{{ p.name }}</button>
                 </div>
               </div>
-              <div class="panel-row"><label>主色调</label><input type="color" v-model="theme.accent" @input="onThemeInput" /><span class="panel-hint">按钮、链接、高亮都用它</span></div>
+              <div class="panel-row"><label>主色调</label><input type="color" v-model="theme.accent" @input="onThemeInput" /><span class="panel-hint">按钮、链接、日历、高亮都用它</span></div>
               <div class="panel-row"><label>页面背景</label><input type="color" v-model="theme.bg" @input="onThemeInput" /></div>
               <div class="panel-row"><label>卡片背景</label><input type="color" v-model="theme.card" @input="onThemeInput" /></div>
               <div class="panel-row"><label>文字颜色</label><input type="color" v-model="theme.text" @input="onThemeInput" /></div>
@@ -342,7 +442,7 @@
             <div class="sheet-foot">
               <template v-if="modal === 'editor'">
                 <button class="ghost" @click="closeModal">取消</button>
-                <button class="primary" @click="save">保存日记</button>
+                <button class="primary" @click="save">{{ editingId ? '保存修改' : '保存日记' }}</button>
               </template>
               <template v-else>
                 <button class="primary" @click="closeModal">完成</button>
@@ -359,6 +459,7 @@
 const { createApp } = Vue;
 const DATA_KEY = 'micky-diary-data';
 const SYNC_KEY = 'micky-diary-sync';
+const MAX_PHOTOS = 9;
 
 const DEFAULT_THEME = {
   title: '📔 Micky的生活日记',
@@ -392,7 +493,7 @@ const SIZE_MAP = { sm: '13px', md: '14px', lg: '16px' };
 const MOODS = [
   { v: '开心', e: '😄' },
   { v: '平静', e: '😌' },
-  { v: '疲惫', e: '😮💨' },
+  { v: '疲惫', e: '😮‍💨' },
   { v: '难过', e: '😔' }
 ];
 const WEATHERS = [
@@ -419,8 +520,15 @@ function b64decode(b64) {
   return new TextDecoder().decode(bytes);
 }
 
+function fmtDate(d) {
+  const m = ('0' + (d.getMonth() + 1)).slice(-2);
+  const day = ('0' + d.getDate()).slice(-2);
+  return d.getFullYear() + '-' + m + '-' + day;
+}
+
 createApp({
   data() {
+    const now = new Date();
     return {
       SECRET: '051222520',
       pwd: '',
@@ -433,9 +541,16 @@ createApp({
       compressing: false,
       dragOver: false,
       modal: '',
+      lightbox: '',
+      editingId: null,
       presets: PRESETS,
       moods: MOODS,
       weathers: WEATHERS,
+      weekdays: ['一', '二', '三', '四', '五', '六', '日'],
+      calYear: now.getFullYear(),
+      calMonth: now.getMonth(),
+      filterTag: '',
+      filterDate: '',
       theme: Object.assign({}, DEFAULT_THEME),
       themeUpdatedAt: 0,
       sync: { owner: '2329118415-lang', repo: 'micky-diary-data', file: 'diary.json', token: '' },
@@ -447,23 +562,100 @@ createApp({
       syncTimer: null,
       autoTimer: null,
       lastSyncTs: 0,
-      form: { date: '', title: '', content: '', mood: '开心', weather: '晴', photo: '' },
+      form: { date: fmtDate(now), title: '', content: '', mood: '开心', weather: '晴', photos: [] },
       list: [],
       deletedIds: []
     };
   },
   computed: {
+    todayStr() {
+      return fmtDate(new Date());
+    },
     filtered() {
-      const k = this.keyword.trim();
-      if (!k) return this.list;
-      return this.list.filter((item) => (item.title + item.content + item.mood + item.weather).indexOf(k) > -1);
+      const k = this.keyword.trim().toLowerCase();
+      let arr = this.list;
+      if (this.filterTag) arr = arr.filter((e) => (e.tags || []).indexOf(this.filterTag) > -1);
+      if (this.filterDate) arr = arr.filter((e) => e.date === this.filterDate);
+      if (k) {
+        arr = arr.filter((e) => (e.title + ' ' + e.content + ' ' + (e.mood || '') + ' ' + (e.weather || '') + ' ' + (e.tags || []).join(' ')).toLowerCase().indexOf(k) > -1);
+      }
+      return arr;
+    },
+    dateCounts() {
+      const map = {};
+      this.list.forEach((e) => { map[e.date] = (map[e.date] || 0) + 1; });
+      return map;
+    },
+    monthLabel() {
+      return this.calYear + ' 年 ' + (this.calMonth + 1) + ' 月';
+    },
+    monthCells() {
+      const year = this.calYear;
+      const month = this.calMonth;
+      const first = new Date(year, month, 1);
+      const offset = (first.getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const cells = [];
+      const counts = this.dateCounts;
+      for (let i = offset; i > 0; i--) {
+        const d = new Date(year, month, 1 - i);
+        const key = fmtDate(d);
+        cells.push({ key: key, day: d.getDate(), inMonth: false, count: counts[key] || 0 });
+      }
+      for (let day = 1; day <= daysInMonth; day++) {
+        const key = fmtDate(new Date(year, month, day));
+        cells.push({ key: key, day: day, inMonth: true, count: counts[key] || 0 });
+      }
+      let extra = 1;
+      while (cells.length % 7 !== 0) {
+        const d = new Date(year, month + 1, extra++);
+        const key = fmtDate(d);
+        cells.push({ key: key, day: d.getDate(), inMonth: false, count: counts[key] || 0 });
+      }
+      return cells;
+    },
+    tagList() {
+      const map = {};
+      this.list.forEach((e) => (e.tags || []).forEach((t) => { map[t] = (map[t] || 0) + 1; }));
+      return Object.keys(map).sort((a, b) => map[b] - map[a]).slice(0, 10);
+    },
+    onThisDay() {
+      const md = this.todayStr.slice(5);
+      return this.list.filter((e) => e.date.slice(5) === md && e.date.slice(0, 4) !== this.todayStr.slice(0, 4));
+    },
+    streak() {
+      const set = {};
+      this.list.forEach((e) => { set[e.date] = true; });
+      let count = 0;
+      const d = new Date();
+      if (!set[fmtDate(d)]) d.setDate(d.getDate() - 1);
+      while (set[fmtDate(d)]) {
+        count++;
+        d.setDate(d.getDate() - 1);
+      }
+      return count;
+    },
+    monthCount() {
+      const prefix = this.todayStr.slice(0, 7);
+      return this.list.filter((e) => e.date.slice(0, 7) === prefix).length;
+    },
+    wordsTotal() {
+      return this.list.reduce((sum, e) => sum + (e.title || '').length + (e.content || '').length, 0);
+    },
+    localSize() {
+      try {
+        const raw = localStorage.getItem(DATA_KEY) || '';
+        const kb = raw.length / 1024;
+        return kb > 1024 ? (kb / 1024).toFixed(1) + ' MB' : kb.toFixed(0) + ' KB';
+      } catch (err) { return '未知'; }
     },
     syncReady() {
       return !!(this.sync.owner && this.sync.repo && this.sync.token);
     },
     modalTitle() {
-      if (this.modal === 'editor') return '✍️ 写一篇新日记';
+      if (this.modal === 'editor') return this.editingId ? '✏️ 编辑日记' : '✍️ 写一篇新日记';
       if (this.modal === 'theme') return '🎨 样式 DIY';
+      if (this.modal === 'data') return '📦 数据与备份';
       return '☁️ 跨设备同步';
     },
     syncDot() {
@@ -479,7 +671,7 @@ createApp({
     if (saved) {
       try {
         const doc = JSON.parse(saved);
-        this.list = doc.entries || [];
+        this.list = (doc.entries || []).map((e) => this.normalizeEntry(e));
         this.deletedIds = doc.deletedIds || [];
         if (doc.theme) this.theme = Object.assign({}, DEFAULT_THEME, doc.theme);
         this.themeUpdatedAt = doc.themeUpdatedAt || 0;
@@ -504,18 +696,57 @@ createApp({
     });
     window.addEventListener('focus', function () { self.maybeAutoSync(10000); });
     window.addEventListener('online', function () { if (self.syncReady && self.isLoggedIn) self.syncNow(); });
-    window.addEventListener('keydown', function (e) { if (e.key === 'Escape' && self.modal) self.closeModal(); });
+    window.addEventListener('keydown', function (e) {
+      const tag = (e.target && e.target.tagName) || '';
+      const typing = tag === 'INPUT' || tag === 'TEXTAREA';
+      if (e.key === 'Escape') {
+        if (self.lightbox) { self.lightbox = ''; return; }
+        if (self.modal) { self.closeModal(); return; }
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && self.modal === 'editor') {
+        e.preventDefault();
+        self.save();
+        return;
+      }
+      if (e.key === '/' && !typing && !self.modal) {
+        e.preventDefault();
+        if (self.$refs.searchInput) self.$refs.searchInput.focus();
+      }
+    });
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('./sw.js').catch(function () { /* 离线能力可选 */ });
+      });
+    }
   },
   beforeUnmount() {
     if (this.autoTimer) clearInterval(this.autoTimer);
     if (this.syncTimer) clearTimeout(this.syncTimer);
   },
   methods: {
-    today() {
-      const d = new Date();
-      const m = ('0' + (d.getMonth() + 1)).slice(-2);
-      const day = ('0' + d.getDate()).slice(-2);
-      return d.getFullYear() + '-' + m + '-' + day;
+    fmtDate,
+    normalizeEntry(e) {
+      if (!e) return e;
+      if (!e.photos && e.photo) e.photos = [e.photo];
+      if (!e.photos) e.photos = [];
+      if (!e.tags) e.tags = this.parseTags((e.title || '') + ' ' + (e.content || ''));
+      if (!e.updatedAt) e.updatedAt = e.id || Date.now();
+      return e;
+    },
+    parseTags(text) {
+      const src = String(text || '');
+      const out = [];
+      const re = /#([^\s#,，。；;]{1,16})/g;
+      let m = re.exec(src);
+      while (m) {
+        if (out.indexOf(m[1]) === -1) out.push(m[1]);
+        m = re.exec(src);
+      }
+      return out;
+    },
+    entryPhotos(item) {
+      if (item.photos && item.photos.length) return item.photos;
+      return item.photo ? [item.photo] : [];
     },
     moodEmoji(v) {
       const hit = MOODS.filter((m) => m.v === v)[0];
@@ -528,6 +759,9 @@ createApp({
     sortList(arr) {
       const byCreated = !!(this.theme && this.theme.sort === 'created');
       arr.sort((a, b) => {
+        const ap = a.pinned ? 1 : 0;
+        const bp = b.pinned ? 1 : 0;
+        if (ap !== bp) return bp - ap;
         const at = a.updatedAt || a.id || 0;
         const bt = b.updatedAt || b.id || 0;
         if (byCreated) return bt - at;
@@ -543,12 +777,31 @@ createApp({
       this.sortEntries();
       this.onThemeInput();
     },
+    heatStyle(count) {
+      if (!count) return {};
+      const level = Math.min(count, 4);
+      return { background: this.withAlpha(this.theme.accent, 0.1 + level * 0.16) };
+    },
+    shiftMonth(delta) {
+      const d = new Date(this.calYear, this.calMonth + delta, 1);
+      this.calYear = d.getFullYear();
+      this.calMonth = d.getMonth();
+    },
+    onDayClick(cell) {
+      if (cell.count) {
+        this.filterDate = this.filterDate === cell.key ? '' : cell.key;
+        this.filterTag = '';
+      } else {
+        this.openEditorForDate(cell.key);
+      }
+    },
     withAlpha(hex, alpha) {
       let h = String(hex || '#000000').replace('#', '').trim();
       if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
       if (h.length !== 6) h = '000000';
-      const a = Math.round(Math.max(0, Math.min(1, alpha)) * 255).toString(16);
-      return '#' + h + (a.length === 1 ? '0' + a : a);
+      let a = Math.round(Math.max(0, Math.min(1, alpha)) * 255).toString(16);
+      if (a.length === 1) a = '0' + a;
+      return '#' + h + a;
     },
     applyTheme() {
       const root = document.documentElement;
@@ -562,6 +815,8 @@ createApp({
       root.style.setProperty('--radius-lg', Number(this.theme.radius) + 8 + 'px');
       root.style.setProperty('--font', FONT_MAP[this.theme.font] || FONT_MAP.system);
       root.style.setProperty('--base', SIZE_MAP[this.theme.size] || SIZE_MAP.md);
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.setAttribute('content', this.theme.bg);
     },
     onThemeInput() {
       this.theme.radius = Number(this.theme.radius) || 0;
@@ -590,21 +845,41 @@ createApp({
       const self = this;
       this.toastTimer = setTimeout(function () { self.toast = ''; }, 2400);
     },
+    emptyForm(date) {
+      return { date: date || this.todayStr, title: '', content: '', mood: '开心', weather: '晴', photos: [] };
+    },
     openModal(mode) {
       this.tip = '';
       this.modal = mode;
       document.body.style.overflow = 'hidden';
       if (mode === 'editor') {
-        if (!this.form.date) this.form.date = this.today();
+        if (!this.form.date) this.form.date = this.todayStr;
         const self = this;
         this.$nextTick(function () {
           if (self.$refs.titleInput) self.$refs.titleInput.focus();
         });
       }
     },
+    openEditorForDate(date) {
+      this.editingId = null;
+      this.form = this.emptyForm(date);
+      this.openModal('editor');
+    },
+    editEntry(item) {
+      this.editingId = item.id;
+      this.form = {
+        date: item.date,
+        title: item.title,
+        content: item.content,
+        mood: item.mood || '平静',
+        weather: item.weather || '晴',
+        photos: this.entryPhotos(item).slice()
+      };
+      this.openModal('editor');
+    },
     closeModal() {
       this.modal = '';
-      document.body.style.overflow = '';
+      if (!this.lightbox) document.body.style.overflow = '';
     },
     login() {
       if (this.pwd === this.SECRET) {
@@ -620,6 +895,7 @@ createApp({
       this.pwd = '';
       this.keyword = '';
       this.modal = '';
+      this.lightbox = '';
       document.body.style.overflow = '';
     },
     persistLocal() {
@@ -632,9 +908,79 @@ createApp({
         }));
         return true;
       } catch (err) {
-        this.tip = '本地保存失败（照片太大），换一张小一点的照片试试';
+        this.tip = '本地保存失败（照片太多太大），删掉几张再试';
         return false;
       }
+    },
+    download(name, text, mime) {
+      const blob = new Blob([text], { type: mime + ';charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () {
+        URL.revokeObjectURL(url);
+        if (a.parentNode) a.parentNode.removeChild(a);
+      }, 800);
+    },
+    exportJSON() {
+      const doc = {
+        app: 'micky-diary',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        entries: this.list,
+        theme: this.theme
+      };
+      this.download('micky-diary-backup-' + this.todayStr + '.json', JSON.stringify(doc, null, 2), 'application/json');
+      this.showToast('已导出 JSON 备份');
+    },
+    exportMarkdown() {
+      let md = '# ' + this.theme.title + '\n\n';
+      md += '> 导出于 ' + new Date().toLocaleString() + '，共 ' + this.list.length + ' 篇\n\n';
+      this.list.forEach((e) => {
+        md += '## ' + e.date + ' · ' + e.title + '\n\n';
+        const meta = [e.mood, e.weather].filter(Boolean).join(' · ');
+        if (meta) md += '> ' + meta + '\n\n';
+        if (e.content) md += e.content + '\n\n';
+        if (e.tags && e.tags.length) md += e.tags.map((t) => '#' + t).join(' ') + '\n\n';
+      });
+      this.download('micky-diary-' + this.todayStr + '.md', md, 'text/markdown');
+      this.showToast('已导出 Markdown');
+    },
+    pickImport() {
+      if (this.$refs.importInput) this.$refs.importInput.click();
+    },
+    importJSON(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      ev.target.value = '';
+      if (!file) return;
+      const self = this;
+      const reader = new FileReader();
+      reader.onload = function () {
+        try {
+          const parsed = JSON.parse(reader.result);
+          const incoming = Array.isArray(parsed) ? parsed : (parsed.entries || []);
+          const map = {};
+          self.list.forEach((e) => { map[String(e.id)] = e; });
+          let added = 0;
+          incoming.forEach((raw) => {
+            const e = self.normalizeEntry(Object.assign({}, raw));
+            if (!e || e.id === undefined || e.id === null) return;
+            const key = String(e.id);
+            if (!map[key]) { map[key] = e; added++; return; }
+            if ((e.updatedAt || 0) > (map[key].updatedAt || 0)) { map[key] = e; added++; }
+          });
+          self.list = self.sortList(Object.keys(map).map((k) => map[k]));
+          self.persistLocal();
+          if (self.syncReady) self.scheduleSync(400);
+          self.showToast('导入完成，新增/更新 ' + added + ' 篇');
+        } catch (err) {
+          self.showToast('导入失败：文件不是有效的备份 JSON');
+        }
+      };
+      reader.readAsText(file);
     },
     docPath() {
       return '/repos/' + this.sync.owner + '/' + this.sync.repo + '/contents/' + this.sync.file;
@@ -714,12 +1060,10 @@ createApp({
         if (deletedIds.indexOf(item.id) > -1) return;
         const key = String(item.id);
         const old = map[key];
-        if (!old || (item.updatedAt || 0) >= (old.updatedAt || 0)) map[key] = item;
+        if (!old || (item.updatedAt || 0) >= (old.updatedAt || 0)) map[key] = this.normalizeEntry(item);
       });
       const entries = this.sortList(Object.keys(map).map((k) => map[k]));
-      const theme = (remote.themeUpdatedAt || 0) > (local.themeUpdatedAt || 0)
-        ? remote.theme
-        : (local.theme || remote.theme);
+      const theme = (remote.themeUpdatedAt || 0) > (local.themeUpdatedAt || 0) ? remote.theme : (local.theme || remote.theme);
       const themeUpdatedAt = Math.max(remote.themeUpdatedAt || 0, local.themeUpdatedAt || 0);
       const same = JSON.stringify(entries) === JSON.stringify(remote.entries || [])
         && JSON.stringify(theme || null) === JSON.stringify(remote.theme || null)
@@ -816,25 +1160,56 @@ createApp({
       this.remoteSha = null;
       this.syncMsg = '已断开同步，日记仍保存在本机';
     },
+    togglePin(id) {
+      const hit = this.list.filter((e) => e.id === id)[0];
+      if (!hit) return;
+      hit.pinned = !hit.pinned;
+      hit.updatedAt = Date.now();
+      this.sortEntries();
+      this.persistLocal();
+      if (this.syncReady) this.scheduleSync(400);
+      this.showToast(hit.pinned ? '已置顶，排在最前面' : '已取消置顶');
+    },
     save() {
       if (!this.form.date) { this.tip = '请先选择这篇日记的日期'; return; }
       if (!this.form.title) { this.tip = '请填写日记标题'; return; }
-      this.list.unshift({
-        id: Date.now(),
-        date: this.form.date,
-        title: this.form.title,
-        content: this.form.content,
-        mood: this.form.mood,
-        weather: this.form.weather,
-        photo: this.form.photo,
-        updatedAt: Date.now()
-      });
+      const tags = this.parseTags(this.form.title + ' ' + this.form.content);
+      const stamp = Date.now();
+      if (this.editingId) {
+        const hit = this.list.filter((e) => e.id === this.editingId)[0];
+        if (hit) {
+          hit.date = this.form.date;
+          hit.title = this.form.title;
+          hit.content = this.form.content;
+          hit.mood = this.form.mood;
+          hit.weather = this.form.weather;
+          hit.photos = this.form.photos.slice();
+          hit.tags = tags;
+          hit.updatedAt = stamp;
+        }
+      } else {
+        this.list.unshift({
+          id: stamp,
+          date: this.form.date,
+          title: this.form.title,
+          content: this.form.content,
+          mood: this.form.mood,
+          weather: this.form.weather,
+          photos: this.form.photos.slice(),
+          tags: tags,
+          pinned: false,
+          createdAt: stamp,
+          updatedAt: stamp
+        });
+      }
+      const wasEditing = !!this.editingId;
+      this.editingId = null;
       this.sortEntries();
       this.persistLocal();
-      this.form = { date: this.today(), title: '', content: '', mood: '开心', weather: '晴', photo: '' };
+      this.form = this.emptyForm();
       if (this.syncReady) this.scheduleSync(400);
       this.closeModal();
-      this.showToast(this.syncReady ? '已保存，正在同步到云端 ✨' : '已保存到本机 ✨');
+      this.showToast(wasEditing ? '修改已保存 ✨' : (this.syncReady ? '已保存，正在同步到云端 ✨' : '已保存到本机 ✨'));
     },
     remove(id) {
       this.list = this.list.filter((item) => item.id !== id);
@@ -848,8 +1223,8 @@ createApp({
     },
     onDrop(ev) {
       this.dragOver = false;
-      const file = ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0];
-      if (file) this.handleFile(file);
+      const files = ev.dataTransfer && ev.dataTransfer.files;
+      if (files && files.length) this.handleFiles(files);
     },
     compressImage(file) {
       return new Promise((resolve) => {
@@ -878,20 +1253,28 @@ createApp({
         reader.readAsDataURL(file);
       });
     },
-    async handleFile(file) {
-      if (!file || String(file.type).indexOf('image') === -1) { this.tip = '请选择图片文件'; return; }
+    async handleFiles(fileList) {
+      const files = Array.prototype.slice.call(fileList).filter((f) => String(f.type).indexOf('image') === 0);
+      if (!files.length) { this.tip = '请选择图片文件'; return; }
+      const room = MAX_PHOTOS - this.form.photos.length;
+      if (room <= 0) { this.tip = '最多 ' + MAX_PHOTOS + ' 张照片'; return; }
       this.compressing = true;
-      this.form.photo = await this.compressImage(file);
+      const picked = files.slice(0, room);
+      for (let i = 0; i < picked.length; i++) {
+        const data = await this.compressImage(picked[i]);
+        this.form.photos.push(data);
+      }
       this.compressing = false;
+      if (files.length > room) this.tip = '最多 ' + MAX_PHOTOS + ' 张，多余的没有加进来';
     },
     async pickPhoto(ev) {
-      const file = ev.target.files && ev.target.files[0];
-      if (file) await this.handleFile(file);
+      const files = ev.target.files;
+      if (files && files.length) await this.handleFiles(files);
       ev.target.value = '';
+    },
+    removePhoto(i) {
+      this.form.photos.splice(i, 1);
     }
-  },
-  created() {
-    this.form.date = this.today();
   }
 }).mount('#app');
 </script>
