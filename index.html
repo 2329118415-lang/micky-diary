@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow, noarchive, noimageindex" />
+<meta name="referrer" content="no-referrer" />
+<title>Micky的生活日记</title>
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f7f8fa; font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+  #app { max-width: 780px; margin: 0 auto; padding: 24px 16px 64px; }
+  .bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e6e6e6; padding-bottom: 12px; }
+  .bar h1 { font-size: 20px; margin: 0; }
+  .login { max-width: 320px; margin: 64px auto; text-align: center; }
+  .login input { width: 100%; padding: 10px 12px; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 14px; }
+  .err { font-size: 13px; color: #d9483b; }
+  button { padding: 8px 16px; border: 1px solid #dcdcdc; border-radius: 8px; background: #fff; font-size: 14px; cursor: pointer; }
+  button.primary { background: #2b6cff; border-color: #2b6cff; color: #fff; margin-top: 8px; }
+  .toolbar { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+  .toolbar input { flex: 1; padding: 9px 12px; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 14px; }
+  .editor { border: 1px solid #eaeaea; border-radius: 12px; padding: 16px; background: #fff; }
+  .editor h2 { font-size: 16px; margin: 0 0 12px; }
+  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .row label { width: 42px; font-size: 14px; color: #666; }
+  .row input, .row textarea, .row select { flex: 1; min-width: 160px; padding: 8px 10px; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 14px; font-family: inherit; }
+  .preview { width: 140px; border-radius: 8px; margin-top: 8px; display: block; }
+  .tip { font-size: 13px; color: #2b8a3e; }
+  .timeline { margin-top: 28px; }
+  .entry { background: #fff; border: 1px solid #eaeaea; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .meta { font-size: 13px; color: #888; }
+  .entry h3 { font-size: 16px; margin: 6px 0; }
+  .content { font-size: 14px; line-height: 1.9; white-space: pre-wrap; margin: 0; }
+  .photo { max-width: 100%; border-radius: 10px; margin-top: 8px; }
+  .del { font-size: 12px; padding: 4px 10px; margin-top: 10px; color: #999; }
+  .empty { text-align: center; color: #aaa; font-size: 14px; padding: 40px 0; }
+  .day { font-size: 13px; color: #888; margin: 18px 0 8px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="bar">
+    <h1>📔 Micky的生活日记</h1>
+    <button v-if="isLoggedIn" @click="logout">退出登录</button>
+  </header>
+
+  <section v-if="!isLoggedIn" class="login">
+    <p>私人空间，请输入登录口令</p>
+    <input type="password" v-model="pwd" placeholder="请输入登录口令" @keyup.enter="login" />
+    <button class="primary" @click="login">进入我的日记本</button>
+    <p class="err" v-if="errorMsg">{{ errorMsg }}</p>
+  </section>
+
+  <template v-else>
+    <section class="toolbar">
+      <input v-model="keyword" placeholder="🔍 搜索标题 / 内容 / 心情 / 天气" />
+      <span>共 {{ list.length }} 篇</span>
+    </section>
+
+    <section class="editor">
+      <h2>✍️ 写一篇新日记</h2>
+      <div class="row"><label>日期</label><input type="date" v-model="form.date" /></div>
+      <div class="row"><label>标题</label><input v-model="form.title" placeholder="给今天起个名字" /></div>
+      <div class="row"><label>正文</label><textarea v-model="form.content" rows="4" placeholder="今天发生了什么？"></textarea></div>
+      <div class="row">
+        <label>心情</label>
+        <select v-model="form.mood"><option>开心</option><option>平静</option><option>疲惫</option><option>难过</option></select>
+        <label>天气</label>
+        <select v-model="form.weather"><option>晴</option><option>多云</option><option>小雨</option><option>雪</option></select>
+      </div>
+      <div class="row"><label>照片</label><input type="file" accept="image/*" @change="pickPhoto" /></div>
+      <img v-if="form.photo" :src="form.photo" class="preview" alt="照片预览" />
+      <button class="primary" @click="save">保存到时间轴</button>
+      <p class="tip" v-if="tip">{{ tip }}</p>
+    </section>
+
+    <section class="timeline">
+      <p class="empty" v-if="filtered.length === 0">还没有日记，写下第一篇吧 ✨</p>
+      <article class="entry" v-for="item in filtered" :key="item.id">
+        <div class="meta">📅 {{ item.date }} · {{ item.weather }} · {{ item.mood }}</div>
+        <h3>{{ item.title }}</h3>
+        <p class="content">{{ item.content }}</p>
+        <img v-if="item.photo" :src="item.photo" class="photo" alt="日记照片" />
+        <br />
+        <button class="del" @click="remove(item.id)">删除</button>
+      </article>
+    </section>
+  </template>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data() {
+    return {
+      SECRET: '051222520',
+      pwd: '',
+      isLoggedIn: false,
+      errorMsg: '',
+      keyword: '',
+      tip: '',
+      form: { date: '', title: '', content: '', mood: '开心', weather: '晴', photo: '' },
+      list: []
+    };
+  },
+  computed: {
+    filtered() {
+      const k = this.keyword.trim();
+      if (!k) return this.list;
+      return this.list.filter((item) => (item.title + item.content + item.mood + item.weather).indexOf(k) > -1);
+    }
+  },
+  mounted() {
+    const saved = localStorage.getItem('micky-diary-data');
+    if (saved) {
+      try { this.list = JSON.parse(saved); } catch (err) { this.list = []; }
+    }
+  },
+  methods: {
+    today() {
+      const d = new Date();
+      const m = ('0' + (d.getMonth() + 1)).slice(-2);
+      const day = ('0' + d.getDate()).slice(-2);
+      return d.getFullYear() + '-' + m + '-' + day;
+    },
+    login() {
+      if (this.pwd === this.SECRET) { this.isLoggedIn = true; this.errorMsg = ''; }
+      else { this.errorMsg = '口令不正确，只有你可以进入这个空间'; }
+    },
+    logout() { this.isLoggedIn = false; this.pwd = ''; this.keyword = ''; },
+    save() {
+      if (!this.form.date) { this.tip = '请先选择这篇日记的日期'; return; }
+      if (!this.form.title) { this.tip = '请填写日记标题'; return; }
+      this.list.unshift({
+        id: Date.now(),
+        date: this.form.date,
+        title: this.form.title,
+        content: this.form.content,
+        mood: this.form.mood,
+        weather: this.form.weather,
+        photo: this.form.photo
+      });
+      this.list.sort((a, b) => (a.date < b.date ? 1 : -1));
+      this.persist();
+      this.form = { date: '', title: '', content: '', mood: '开心', weather: '晴', photo: '' };
+      this.tip = '已保存，日记已按日期归档';
+    },
+    remove(id) {
+      this.list = this.list.filter((item) => item.id !== id);
+      this.persist();
+    },
+    pickPhoto(ev) {
+      const file = ev.target.files && ev.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { this.form.photo = reader.result; };
+      reader.readAsDataURL(file);
+    },
+    persist() {
+      try { localStorage.setItem('micky-diary-data', JSON.stringify(this.list)); }
+      catch (err) { this.tip = '图片太大导致保存失败，换一张小一点的照片试试'; }
+    }
+  },
+  created() {
+    this.form.date = this.today();
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
