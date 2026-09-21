@@ -124,6 +124,13 @@
         </select>
       </div>
       <div class="row"><label>首页标题</label><input v-model="theme.title" @input="onThemeInput" placeholder="例如 📔 Micky的生活日记" /></div>
+      <div class="row">
+        <label>日记排序</label>
+        <select v-model="theme.sort" @change="onSortChange">
+          <option value="date">按日记日期，最新的在最前</option>
+          <option value="created">按记录时间，刚写的在最前</option>
+        </select>
+      </div>
       <button @click="resetTheme">恢复默认样式</button>
       <p class="status">样式会存在本机，并跟着日记一起同步到你的私有仓库，换设备也是同一套样式。</p>
     </section>
@@ -189,6 +196,7 @@ const DEFAULT_THEME = {
   radius: 12,
   font: 'system',
   size: 'md',
+  sort: 'date',
   layout: 'timeline'
 };
 
@@ -278,6 +286,7 @@ createApp({
         this.themeUpdatedAt = doc.themeUpdatedAt || 0;
       } catch (err) { this.list = []; }
     }
+    this.sortEntries();
     this.applyTheme();
     const cfg = localStorage.getItem(SYNC_KEY);
     if (cfg) {
@@ -303,6 +312,24 @@ createApp({
       const m = ('0' + (d.getMonth() + 1)).slice(-2);
       const day = ('0' + d.getDate()).slice(-2);
       return d.getFullYear() + '-' + m + '-' + day;
+    },
+    sortList(arr) {
+      const byCreated = !!(this.theme && this.theme.sort === 'created');
+      arr.sort((a, b) => {
+        const at = a.updatedAt || a.id || 0;
+        const bt = b.updatedAt || b.id || 0;
+        if (byCreated) return bt - at;
+        if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+        return bt - at;
+      });
+      return arr;
+    },
+    sortEntries() {
+      this.sortList(this.list);
+    },
+    onSortChange() {
+      this.sortEntries();
+      this.onThemeInput();
     },
     applyTheme() {
       const root = document.documentElement;
@@ -445,7 +472,7 @@ createApp({
         const old = map[key];
         if (!old || (item.updatedAt || 0) >= (old.updatedAt || 0)) map[key] = item;
       });
-      const entries = Object.keys(map).map((k) => map[k]).sort((a, b) => (a.date < b.date ? 1 : -1));
+      const entries = this.sortList(Object.keys(map).map((k) => map[k]));
       const theme = (remote.themeUpdatedAt || 0) > (local.themeUpdatedAt || 0)
         ? remote.theme
         : (local.theme || remote.theme);
@@ -488,6 +515,7 @@ createApp({
         }, remote);
         this.list = merged.entries;
         this.deletedIds = merged.deletedIds;
+        this.sortEntries();
         this.theme = Object.assign({}, DEFAULT_THEME, merged.theme || {});
         this.themeUpdatedAt = merged.themeUpdatedAt;
         this.applyTheme();
@@ -563,7 +591,7 @@ createApp({
         photo: this.form.photo,
         updatedAt: Date.now()
       });
-      this.list.sort((a, b) => (a.date < b.date ? 1 : -1));
+      this.sortEntries();
       this.persistLocal();
       this.form = { date: this.today(), title: '', content: '', mood: '开心', weather: '晴', photo: '' };
       if (this.syncReady) {
