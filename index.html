@@ -18,8 +18,13 @@
   .err { font-size: 13px; color: #d9483b; }
   button { padding: 8px 16px; border: 1px solid #dcdcdc; border-radius: 8px; background: #fff; font-size: 14px; cursor: pointer; }
   button.primary { background: #2b6cff; border-color: #2b6cff; color: #fff; margin-top: 8px; }
-  .toolbar { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
-  .toolbar input { flex: 1; padding: 9px 12px; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 14px; }
+  button.small { font-size: 12px; padding: 5px 10px; }
+  .toolbar { display: flex; align-items: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+  .toolbar input { flex: 1; min-width: 180px; padding: 9px 12px; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 14px; }
+  .status { font-size: 12px; color: #888; }
+  .sync { border: 1px dashed #d5d5d5; border-radius: 12px; padding: 14px; background: #fff; margin-bottom: 18px; }
+  .sync h2 { font-size: 15px; margin: 0 0 10px; }
+  .sync .row label { width: 76px; }
   .editor { border: 1px solid #eaeaea; border-radius: 12px; padding: 16px; background: #fff; }
   .editor h2 { font-size: 16px; margin: 0 0 12px; }
   .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
@@ -35,7 +40,7 @@
   .photo { max-width: 100%; border-radius: 10px; margin-top: 8px; }
   .del { font-size: 12px; padding: 4px 10px; margin-top: 10px; color: #999; }
   .empty { text-align: center; color: #aaa; font-size: 14px; padding: 40px 0; }
-  .day { font-size: 13px; color: #888; margin: 18px 0 8px; }
+  a { color: #2b6cff; }
 </style>
 </head>
 <body>
@@ -56,6 +61,22 @@
     <section class="toolbar">
       <input v-model="keyword" placeholder="🔍 搜索标题 / 内容 / 心情 / 天气" />
       <span>共 {{ list.length }} 篇</span>
+      <button class="small" @click="showSync = !showSync">☁️ 同步设置</button>
+      <button class="small" v-if="syncReady" @click="syncNow">立即同步</button>
+      <span class="status">{{ syncMsg }}</span>
+    </section>
+
+    <section class="sync" v-if="showSync">
+      <h2>☁️ 跨设备同步（GitHub 私有仓库）</h2>
+      <p class="status" v-if="syncReady">已连接：{{ sync.owner }}/{{ sync.repo }} · {{ sync.file }}</p>
+      <p class="status" v-else>在一台设备上填好并保存后，其它设备填同样内容即可看到同一批日记。</p>
+      <div class="row"><label>账号</label><input v-model="form2.owner" placeholder="GitHub 用户名" /></div>
+      <div class="row"><label>数据仓库</label><input v-model="form2.repo" placeholder="micky-diary-data" /></div>
+      <div class="row"><label>文件名</label><input v-model="form2.file" placeholder="diary.json" /></div>
+      <div class="row"><label>访问令牌</label><input type="password" v-model="form2.token" placeholder="粘贴只对该仓库有读写权限的 fine-grained token" /></div>
+      <button class="primary" @click="enableSync">保存并开始同步</button>
+      <button v-if="syncReady" @click="disableSync" style="margin-left:10px;">断开同步</button>
+      <p class="status">令牌只保存在这台设备的浏览器里，不会写进网页源码。</p>
     </section>
 
     <section class="editor">
@@ -70,6 +91,7 @@
         <select v-model="form.weather"><option>晴</option><option>多云</option><option>小雨</option><option>雪</option></select>
       </div>
       <div class="row"><label>照片</label><input type="file" accept="image/*" @change="pickPhoto" /></div>
+      <p class="status" v-if="compressing">正在压缩照片…</p>
       <img v-if="form.photo" :src="form.photo" class="preview" alt="照片预览" />
       <button class="primary" @click="save">保存到时间轴</button>
       <p class="tip" v-if="tip">{{ tip }}</p>
@@ -91,6 +113,25 @@
 
 <script>
 const { createApp } = Vue;
+const DATA_KEY = 'micky-diary-data';
+const SYNC_KEY = 'micky-diary-sync';
+
+function b64encode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  const chunk = 8192;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(bin);
+}
+
+function b64decode(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
 
 createApp({
   data() {
@@ -101,8 +142,15 @@ createApp({
       errorMsg: '',
       keyword: '',
       tip: '',
+      compressing: false,
+      showSync: false,
+      sync: { owner: '', repo: 'micky-diary-data', file: 'diary.json', token: '' },
+      form2: { owner: '', repo: 'micky-diary-data', file: 'diary.json', token: '' },
+      remoteSha: null,
+      syncMsg: '未开启同步',
       form: { date: '', title: '', content: '', mood: '开心', weather: '晴', photo: '' },
-      list: []
+      list: [],
+      deletedIds: []
     };
   },
   computed: {
@@ -110,12 +158,27 @@ createApp({
       const k = this.keyword.trim();
       if (!k) return this.list;
       return this.list.filter((item) => (item.title + item.content + item.mood + item.weather).indexOf(k) > -1);
+    },
+    syncReady() {
+      return !!(this.sync.owner && this.sync.repo && this.sync.token);
     }
   },
   mounted() {
-    const saved = localStorage.getItem('micky-diary-data');
+    const saved = localStorage.getItem(DATA_KEY);
     if (saved) {
-      try { this.list = JSON.parse(saved); } catch (err) { this.list = []; }
+      try {
+        const doc = JSON.parse(saved);
+        this.list = doc.entries || [];
+        this.deletedIds = doc.deletedIds || [];
+      } catch (err) { this.list = []; }
+    }
+    const cfg = localStorage.getItem(SYNC_KEY);
+    if (cfg) {
+      try {
+        this.sync = JSON.parse(cfg);
+        this.form2 = Object.assign({}, this.sync);
+        this.syncMsg = '已连接，登录后自动同步';
+      } catch (err) { /* ignore */ }
     }
   },
   methods: {
@@ -126,10 +189,115 @@ createApp({
       return d.getFullYear() + '-' + m + '-' + day;
     },
     login() {
-      if (this.pwd === this.SECRET) { this.isLoggedIn = true; this.errorMsg = ''; }
-      else { this.errorMsg = '口令不正确，只有你可以进入这个空间'; }
+      if (this.pwd === this.SECRET) {
+        this.isLoggedIn = true;
+        this.errorMsg = '';
+        if (this.syncReady) this.syncNow();
+      } else {
+        this.errorMsg = '口令不正确，只有你可以进入这个空间';
+      }
     },
-    logout() { this.isLoggedIn = false; this.pwd = ''; this.keyword = ''; },
+    logout() {
+      this.isLoggedIn = false;
+      this.pwd = '';
+      this.keyword = '';
+      this.showSync = false;
+    },
+    persistLocal() {
+      try {
+        localStorage.setItem(DATA_KEY, JSON.stringify({ entries: this.list, deletedIds: this.deletedIds }));
+        return true;
+      } catch (err) {
+        this.tip = '本地保存失败（照片太大），换一张小一点的照片试试';
+        return false;
+      }
+    },
+    docPath() {
+      return '/repos/' + this.sync.owner + '/' + this.sync.repo + '/contents/' + this.sync.file;
+    },
+    async gh(path, options) {
+      const opt = options || {};
+      const headers = Object.assign({
+        'Authorization': 'Bearer ' + this.sync.token,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28'
+      }, opt.headers || {});
+      const res = await fetch('https://api.github.com' + path, Object.assign({}, opt, { headers: headers }));
+      if (!res.ok) {
+        const text = await res.text();
+        const err = new Error('HTTP ' + res.status + ' ' + text.slice(0, 160));
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    },
+    async pullRemote() {
+      try {
+        const data = await this.gh(this.docPath() + '?t=' + Date.now());
+        this.remoteSha = data.sha;
+        const remote = JSON.parse(b64decode((data.content || '').replace(/\s/g, '')));
+        return remote || { entries: [], deletedIds: [] };
+      } catch (err) {
+        if (err.status === 404) { this.remoteSha = null; return { entries: [], deletedIds: [] }; }
+        throw err;
+      }
+    },
+    mergeDocs(local, remote) {
+      const deletedIds = Array.from(new Set([].concat(local.deletedIds || [], remote.deletedIds || [])));
+      const map = {};
+      [].concat(remote.entries || [], local.entries || []).forEach((item) => {
+        if (!item || item.id === undefined || item.id === null) return;
+        if (deletedIds.indexOf(item.id) > -1) return;
+        const key = String(item.id);
+        const old = map[key];
+        if (!old || (item.updatedAt || 0) >= (old.updatedAt || 0)) map[key] = item;
+      });
+      const entries = Object.keys(map).map((k) => map[k]).sort((a, b) => (a.date < b.date ? 1 : -1));
+      const same = JSON.stringify(entries) === JSON.stringify(remote.entries || []);
+      return { entries: entries, deletedIds: deletedIds, same: same };
+    },
+    async pushRemote() {
+      const doc = { updatedAt: Date.now(), entries: this.list, deletedIds: this.deletedIds };
+      const body = { message: 'sync diary ' + new Date().toISOString(), content: b64encode(JSON.stringify(doc)) };
+      if (this.remoteSha) body.sha = this.remoteSha;
+      const data = await this.gh(this.docPath(), { method: 'PUT', body: JSON.stringify(body) });
+      this.remoteSha = data.content ? data.content.sha : this.remoteSha;
+    },
+    async syncNow() {
+      if (!this.syncReady) { this.showSync = true; this.syncMsg = '请先填写同步设置'; return; }
+      this.syncMsg = '同步中…';
+      try {
+        const remote = await this.pullRemote();
+        const merged = this.mergeDocs({ entries: this.list, deletedIds: this.deletedIds }, remote);
+        this.list = merged.entries;
+        this.deletedIds = merged.deletedIds;
+        this.persistLocal();
+        if (!merged.same || !this.remoteSha) await this.pushRemote();
+        this.syncMsg = '✅ 已同步 · ' + new Date().toLocaleTimeString();
+      } catch (err) {
+        this.syncMsg = '⚠️ 同步失败：' + err.message;
+      }
+    },
+    async enableSync() {
+      this.sync = Object.assign({}, this.form2);
+      localStorage.setItem(SYNC_KEY, JSON.stringify(this.sync));
+      this.syncMsg = '正在连接…';
+      try {
+        await this.gh('/repos/' + this.sync.owner + '/' + this.sync.repo);
+      } catch (err) {
+        this.syncMsg = '⚠️ 连接失败：' + err.message;
+        return;
+      }
+      this.showSync = false;
+      await this.syncNow();
+    },
+    disableSync() {
+      this.sync = { owner: '', repo: 'micky-diary-data', file: 'diary.json', token: '' };
+      this.form2 = Object.assign({}, this.sync);
+      localStorage.removeItem(SYNC_KEY);
+      this.remoteSha = null;
+      this.syncMsg = '已断开同步，日记仍保存在本机';
+    },
     save() {
       if (!this.form.date) { this.tip = '请先选择这篇日记的日期'; return; }
       if (!this.form.title) { this.tip = '请填写日记标题'; return; }
@@ -140,27 +308,55 @@ createApp({
         content: this.form.content,
         mood: this.form.mood,
         weather: this.form.weather,
-        photo: this.form.photo
+        photo: this.form.photo,
+        updatedAt: Date.now()
       });
       this.list.sort((a, b) => (a.date < b.date ? 1 : -1));
-      this.persist();
-      this.form = { date: '', title: '', content: '', mood: '开心', weather: '晴', photo: '' };
+      this.persistLocal();
+      this.form = { date: this.today(), title: '', content: '', mood: '开心', weather: '晴', photo: '' };
       this.tip = '已保存，日记已按日期归档';
+      if (this.syncReady) this.syncNow();
     },
     remove(id) {
       this.list = this.list.filter((item) => item.id !== id);
-      this.persist();
+      if (this.deletedIds.indexOf(id) === -1) this.deletedIds.push(id);
+      this.persistLocal();
+      if (this.syncReady) this.syncNow();
     },
-    pickPhoto(ev) {
+    compressImage(file) {
+      const self = this;
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const img = new Image();
+          img.onload = () => {
+            const max = 1280;
+            let w = img.width;
+            let h = img.height;
+            if (w > max || h > max) {
+              const r = Math.min(max / w, max / h);
+              w = Math.round(w * r);
+              h = Math.round(h * r);
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            try { resolve(canvas.toDataURL('image/jpeg', 0.82)); }
+            catch (err) { resolve(reader.result); }
+          };
+          img.onerror = () => resolve(reader.result);
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    },
+    async pickPhoto(ev) {
       const file = ev.target.files && ev.target.files[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => { this.form.photo = reader.result; };
-      reader.readAsDataURL(file);
-    },
-    persist() {
-      try { localStorage.setItem('micky-diary-data', JSON.stringify(this.list)); }
-      catch (err) { this.tip = '图片太大导致保存失败，换一张小一点的照片试试'; }
+      this.compressing = true;
+      this.form.photo = await this.compressImage(file);
+      this.compressing = false;
     }
   },
   created() {
