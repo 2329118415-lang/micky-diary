@@ -82,7 +82,7 @@
       <span class="status">共 {{ list.length }} 篇</span>
       <button class="small" @click="showTheme = !showTheme; showSync = false">🎨 样式 DIY</button>
       <button class="small" @click="showSync = !showSync; showTheme = false">☁️ 同步设置</button>
-      <button class="small" v-if="syncReady" @click="syncNow">立即同步</button>
+      <button class="small" v-if="syncReady" @click="syncNow">{{ syncing ? '同步中…' : '立即同步' }}</button>
       <span class="status">{{ syncMsg }}</span>
     </section>
 
@@ -246,6 +246,12 @@ createApp({
       form2: { owner: '2329118415-lang', repo: 'micky-diary-data', file: 'diary.json', token: '' },
       remoteSha: null,
       syncMsg: '未开启同步',
+      syncState: 'off',
+      syncing: false,
+      pendingAgain: false,
+      syncTimer: null,
+      autoTimer: null,
+      lastSyncTs: 0,
       form: { date: '', title: '', content: '', mood: '开心', weather: '晴', photo: '' },
       list: [],
       deletedIds: []
@@ -281,6 +287,15 @@ createApp({
         this.syncMsg = '已连接，登录后自动同步';
       } catch (err) { /* ignore */ }
     }
+    const self = this;
+    this.autoTimer = setInterval(function () {
+      if (self.isLoggedIn && self.syncReady) self.maybeAutoSync(25000);
+    }, 30000);
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) self.maybeAutoSync(10000);
+    });
+    window.addEventListener('focus', function () { self.maybeAutoSync(10000); });
+    window.addEventListener('online', function () { if (self.syncReady && self.isLoggedIn) self.syncNow(); });
   },
   methods: {
     today() {
@@ -304,23 +319,21 @@ createApp({
       this.themeUpdatedAt = Date.now();
       this.applyTheme();
       this.persistLocal();
-      if (this.themeTimer) clearTimeout(this.themeTimer);
-      const self = this;
-      this.themeTimer = setTimeout(function () { if (self.syncReady) self.syncNow(); }, 1500);
+      this.scheduleSync(1500);
     },
     applyPreset(p) {
       this.theme = Object.assign({}, DEFAULT_THEME, p.theme);
       this.themeUpdatedAt = Date.now();
       this.applyTheme();
       this.persistLocal();
-      if (this.syncReady) this.syncNow();
+      this.scheduleSync(300);
     },
     resetTheme() {
       this.theme = Object.assign({}, DEFAULT_THEME);
       this.themeUpdatedAt = Date.now();
       this.applyTheme();
       this.persistLocal();
-      if (this.syncReady) this.syncNow();
+      this.scheduleSync(300);
     },
     login() {
       if (this.pwd === this.SECRET) {
@@ -456,8 +469,15 @@ createApp({
       this.remoteSha = data.content ? data.content.sha : this.remoteSha;
     },
     async syncNow() {
-      if (!this.syncReady) { this.showSync = true; this.showTheme = false; this.syncMsg = '请先填写同步设置'; return; }
-      this.syncMsg = '同步中…';
+      if (!this.syncReady) {
+        this.syncState = 'off';
+        this.syncMsg = '未开启同步：日记只存在本机';
+        return;
+      }
+      if (this.syncing) { this.syncState = 'pending'; this.pendingAgain = true; return; }
+      this.syncing = true;
+      this.syncState = 'syncing';
+      this.syncMsg = '☁️ 同步中…';
       try {
         const remote = await this.pullRemote();
         const merged = this.mergeDocs({
@@ -473,10 +493,34 @@ createApp({
         this.applyTheme();
         this.persistLocal();
         if (!merged.same || !this.remoteSha) await this.pushRemote();
-        this.syncMsg = '✅ 已同步 · ' + new Date().toLocaleTimeString();
+        this.syncing = false;
+        this.syncState = 'ok';
+        this.lastSyncTs = Date.now();
+        const time = new Date().toLocaleTimeString();
+        this.syncMsg = '✅ 已同步 · ' + time;
+        if (this.tip.indexOf('正在同步') > -1) this.tip = '已保存，并已同步到云端 ✅ · ' + time;
+        if (this.pendingAgain) { this.pendingAgain = false; this.scheduleSync(600); }
       } catch (err) {
+        this.syncing = false;
+        this.syncState = 'error';
         this.syncMsg = '⚠️ 同步失败：' + err.message;
+        if (this.tip.indexOf('正在同步') > -1) this.tip = '已保存到本机，云端同步失败，联网后会自动重试';
+        if (this.pendingAgain) { this.pendingAgain = false; this.scheduleSync(3000); }
       }
+    },
+    scheduleSync(delay) {
+      if (!this.syncReady) { this.syncState = 'off'; return; }
+      this.syncState = 'pending';
+      if (this.syncing) { this.pendingAgain = true; return; }
+      if (this.syncTimer) clearTimeout(this.syncTimer);
+      const self = this;
+      this.syncTimer = setTimeout(function () { self.syncNow(); }, delay === undefined ? 700 : delay);
+    },
+    maybeAutoSync(minGap) {
+      if (!this.isLoggedIn || !this.syncReady || this.syncing) return;
+      const gap = minGap === undefined ? 15000 : minGap;
+      if (this.lastSyncTs && Date.now() - this.lastSyncTs < gap) return;
+      this.syncNow();
     },
     async enableSync() {
       this.normalizeForm2();
@@ -522,14 +566,19 @@ createApp({
       this.list.sort((a, b) => (a.date < b.date ? 1 : -1));
       this.persistLocal();
       this.form = { date: this.today(), title: '', content: '', mood: '开心', weather: '晴', photo: '' };
-      this.tip = '已保存，日记已按日期归档';
-      if (this.syncReady) this.syncNow();
+      if (this.syncReady) {
+        this.tip = '已保存，正在同步到云端…';
+        this.scheduleSync(400);
+      } else {
+        this.tip = '已保存到本机（还没开启同步，换设备看不到）';
+      }
     },
     remove(id) {
       this.list = this.list.filter((item) => item.id !== id);
       if (this.deletedIds.indexOf(id) === -1) this.deletedIds.push(id);
       this.persistLocal();
-      if (this.syncReady) this.syncNow();
+      this.tip = this.syncReady ? '已删除，正在同步到云端…' : '已删除（本机）';
+      this.scheduleSync(400);
     },
     compressImage(file) {
       return new Promise((resolve) => {
@@ -565,6 +614,10 @@ createApp({
       this.form.photo = await this.compressImage(file);
       this.compressing = false;
     }
+  },
+  unmounted() {
+    if (this.autoTimer) clearInterval(this.autoTimer);
+    if (this.syncTimer) clearTimeout(this.syncTimer);
   },
   created() {
     this.form.date = this.today();
