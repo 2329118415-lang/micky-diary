@@ -8,45 +8,64 @@
 <title>Micky的生活日记</title>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <style>
+  :root {
+    --accent: #2b6cff;
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --text: #333333;
+    --muted: rgba(128, 128, 128, 0.95);
+    --line: rgba(128, 128, 128, 0.25);
+    --radius: 12px;
+    --base: 14px;
+    --font: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; background: #f7f8fa; font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-  #app { max-width: 780px; margin: 0 auto; padding: 24px 16px 64px; }
-  .bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e6e6e6; padding-bottom: 12px; }
-  .bar h1 { font-size: 20px; margin: 0; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: var(--base); transition: background .2s ease, color .2s ease; }
+  #app { max-width: 820px; margin: 0 auto; padding: 24px 16px 64px; }
+  .bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  .bar h1 { font-size: 1.4em; margin: 0; }
   .login { max-width: 320px; margin: 64px auto; text-align: center; }
-  .login input { width: 100%; padding: 10px 12px; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 14px; }
-  .err { font-size: 13px; color: #d9483b; }
-  button { padding: 8px 16px; border: 1px solid #dcdcdc; border-radius: 8px; background: #fff; font-size: 14px; cursor: pointer; }
-  button.primary { background: #2b6cff; border-color: #2b6cff; color: #fff; margin-top: 8px; }
-  button.small { font-size: 12px; padding: 5px 10px; }
+  .login input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 1em; font-family: inherit; }
+  .err { font-size: .93em; color: #d9483b; }
+  button { padding: 8px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 1em; font-family: inherit; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; margin-top: 8px; }
+  button.small { font-size: .86em; padding: 5px 10px; }
+  button.preset { font-size: .86em; padding: 5px 10px; margin-right: 8px; margin-bottom: 8px; }
   .toolbar { display: flex; align-items: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
-  .toolbar input { flex: 1; min-width: 180px; padding: 9px 12px; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 14px; }
-  .status { font-size: 12px; color: #888; }
-  .sync { border: 1px dashed #d5d5d5; border-radius: 12px; padding: 14px; background: #fff; margin-bottom: 18px; }
-  .sync h2 { font-size: 15px; margin: 0 0 10px; }
-  .sync .row label { width: 76px; }
-  .editor { border: 1px solid #eaeaea; border-radius: 12px; padding: 16px; background: #fff; }
-  .editor h2 { font-size: 16px; margin: 0 0 12px; }
+  .toolbar input { flex: 1; min-width: 180px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 1em; font-family: inherit; }
+  .status { font-size: .86em; color: var(--muted); line-height: 1.7; }
+  .panel { border: 1px dashed var(--line); border-radius: var(--radius); padding: 16px; background: var(--card); margin-bottom: 18px; }
+  .panel h2 { font-size: 1.05em; margin: 0 0 12px; }
+  .panel .row label { width: 84px; }
+  .editor { border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; background: var(--card); }
+  .editor h2 { font-size: 1.05em; margin: 0 0 12px; }
   .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-  .row label { width: 42px; font-size: 14px; color: #666; }
-  .row input, .row textarea, .row select { flex: 1; min-width: 160px; padding: 8px 10px; border: 1px solid #dcdcdc; border-radius: 8px; font-size: 14px; font-family: inherit; }
-  .preview { width: 140px; border-radius: 8px; margin-top: 8px; display: block; }
-  .tip { font-size: 13px; color: #2b8a3e; }
+  .row label { width: 42px; font-size: .95em; color: var(--muted); }
+  .row input, .row textarea, .row select { flex: 1; min-width: 150px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 1em; font-family: inherit; }
+  .row input[type='color'] { flex: 0 0 56px; min-width: 56px; height: 34px; padding: 2px; cursor: pointer; }
+  .row input[type='range'] { flex: 1; padding: 0; }
+  .row input[type='file'] { min-width: 200px; }
+  .preview { width: 140px; border-radius: var(--radius); margin-top: 8px; display: block; }
+  .tip { font-size: .93em; color: var(--muted); }
   .timeline { margin-top: 28px; }
-  .entry { background: #fff; border: 1px solid #eaeaea; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
-  .meta { font-size: 13px; color: #888; }
-  .entry h3 { font-size: 16px; margin: 6px 0; }
-  .content { font-size: 14px; line-height: 1.9; white-space: pre-wrap; margin: 0; }
-  .photo { max-width: 100%; border-radius: 10px; margin-top: 8px; }
-  .del { font-size: 12px; padding: 4px 10px; margin-top: 10px; color: #999; }
-  .empty { text-align: center; color: #aaa; font-size: 14px; padding: 40px 0; }
-  a { color: #2b6cff; }
+  .timeline.waterfall { column-count: 2; column-gap: 14px; }
+  .timeline.waterfall .entry { break-inside: avoid; }
+  @media (max-width: 620px) { .timeline.waterfall { column-count: 1; } }
+  .entry { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .meta { font-size: .93em; color: var(--muted); }
+  .entry h3 { font-size: 1.15em; margin: 6px 0; }
+  .content { font-size: 1em; line-height: 1.9; white-space: pre-wrap; margin: 0; }
+  .photo { max-width: 100%; border-radius: var(--radius); margin-top: 8px; }
+  .del { font-size: .86em; padding: 4px 10px; margin-top: 10px; color: var(--muted); }
+  .empty { text-align: center; color: var(--muted); font-size: 1em; padding: 40px 0; }
+  a { color: var(--accent); }
 </style>
 </head>
 <body>
 <div id="app">
   <header class="bar">
-    <h1>📔 Micky的生活日记</h1>
+    <h1>{{ theme.title }}</h1>
     <button v-if="isLoggedIn" @click="logout">退出登录</button>
   </header>
 
@@ -60,13 +79,56 @@
   <template v-else>
     <section class="toolbar">
       <input v-model="keyword" placeholder="🔍 搜索标题 / 内容 / 心情 / 天气" />
-      <span>共 {{ list.length }} 篇</span>
-      <button class="small" @click="showSync = !showSync">☁️ 同步设置</button>
+      <span class="status">共 {{ list.length }} 篇</span>
+      <button class="small" @click="showTheme = !showTheme; showSync = false">🎨 样式 DIY</button>
+      <button class="small" @click="showSync = !showSync; showTheme = false">☁️ 同步设置</button>
       <button class="small" v-if="syncReady" @click="syncNow">立即同步</button>
       <span class="status">{{ syncMsg }}</span>
     </section>
 
-    <section class="sync" v-if="showSync">
+    <section class="panel" v-if="showTheme">
+      <h2>🎨 样式 DIY（改完立刻生效，自动保存）</h2>
+      <div class="row">
+        <label>预设主题</label>
+        <div>
+          <button class="preset" v-for="p in presets" :key="p.name" @click="applyPreset(p)">{{ p.name }}</button>
+        </div>
+      </div>
+      <div class="row"><label>主色调</label><input type="color" v-model="theme.accent" @input="onThemeInput" /><span class="status">按钮、链接、高亮都用它</span></div>
+      <div class="row"><label>页面背景</label><input type="color" v-model="theme.bg" @input="onThemeInput" /></div>
+      <div class="row"><label>卡片背景</label><input type="color" v-model="theme.card" @input="onThemeInput" /></div>
+      <div class="row"><label>文字颜色</label><input type="color" v-model="theme.text" @input="onThemeInput" /></div>
+      <div class="row"><label>圆角大小</label><input type="range" min="0" max="28" step="1" v-model.number="theme.radius" @input="onThemeInput" /><span class="status">{{ theme.radius }} px</span></div>
+      <div class="row">
+        <label>字体</label>
+        <select v-model="theme.font" @change="onThemeInput">
+          <option value="system">系统默认（现代无衬线）</option>
+          <option value="serif">宋体 / 衬线（纸张感）</option>
+          <option value="kai">楷体（手写感）</option>
+          <option value="mono">等宽（极客感）</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>正文字号</label>
+        <select v-model="theme.size" @change="onThemeInput">
+          <option value="sm">小（13px）</option>
+          <option value="md">中（14px）</option>
+          <option value="lg">大（16px）</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>日记布局</label>
+        <select v-model="theme.layout" @change="onThemeInput">
+          <option value="timeline">时间轴（单列）</option>
+          <option value="waterfall">瀑布流（双列）</option>
+        </select>
+      </div>
+      <div class="row"><label>首页标题</label><input v-model="theme.title" @input="onThemeInput" placeholder="例如 📔 Micky的生活日记" /></div>
+      <button @click="resetTheme">恢复默认样式</button>
+      <p class="status">样式会存在本机，并跟着日记一起同步到你的私有仓库，换设备也是同一套样式。</p>
+    </section>
+
+    <section class="panel" v-if="showSync">
       <h2>☁️ 跨设备同步（GitHub 私有仓库）</h2>
       <p class="status" v-if="syncReady">已连接：{{ sync.owner }}/{{ sync.repo }} · {{ sync.file }}</p>
       <p class="status" v-else>在一台设备上填好并保存后，其它设备填同样内容即可看到同一批日记。</p>
@@ -98,7 +160,7 @@
       <p class="tip" v-if="tip">{{ tip }}</p>
     </section>
 
-    <section class="timeline">
+    <section class="timeline" :class="{ waterfall: theme.layout === 'waterfall' }">
       <p class="empty" v-if="filtered.length === 0">还没有日记，写下第一篇吧 ✨</p>
       <article class="entry" v-for="item in filtered" :key="item.id">
         <div class="meta">📅 {{ item.date }} · {{ item.weather }} · {{ item.mood }}</div>
@@ -116,6 +178,35 @@
 const { createApp } = Vue;
 const DATA_KEY = 'micky-diary-data';
 const SYNC_KEY = 'micky-diary-sync';
+
+const DEFAULT_THEME = {
+  title: '📔 Micky的生活日记',
+  accent: '#2b6cff',
+  bg: '#f7f8fa',
+  card: '#ffffff',
+  text: '#333333',
+  radius: 12,
+  font: 'system',
+  size: 'md',
+  layout: 'timeline'
+};
+
+const PRESETS = [
+  { name: '简约清新', theme: { title: '📔 Micky的生活日记', accent: '#2b6cff', bg: '#f7f8fa', card: '#ffffff', text: '#333333', radius: 12, font: 'system', size: 'md', layout: 'timeline' } },
+  { name: '暗黑极简', theme: { title: '🌙 我的夜晚日记', accent: '#5b8cff', bg: '#14161b', card: '#1e2128', text: '#e9e9ec', radius: 10, font: 'system', size: 'md', layout: 'timeline' } },
+  { name: '复古纸张', theme: { title: '📜 旧时光手记', accent: '#a8622a', bg: '#f4ecdc', card: '#fffaf0', text: '#4a3b2a', radius: 4, font: 'serif', size: 'md', layout: 'timeline' } },
+  { name: '蜜桃少女', theme: { title: '🍑 甜甜的日子', accent: '#ff6f91', bg: '#fff5f7', card: '#ffffff', text: '#5a4550', radius: 20, font: 'kai', size: 'md', layout: 'waterfall' } },
+  { name: '森林绿意', theme: { title: '🌿 慢慢生活', accent: '#2f9e5f', bg: '#f2f8f3', card: '#ffffff', text: '#2f3a33', radius: 14, font: 'system', size: 'lg', layout: 'waterfall' } }
+];
+
+const FONT_MAP = {
+  system: "-apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif",
+  serif: "Georgia, 'Songti SC', SimSun, serif",
+  kai: "'Kaiti SC', KaiTi, STKaiti, serif",
+  mono: "Consolas, 'Courier New', monospace"
+};
+
+const SIZE_MAP = { sm: '13px', md: '14px', lg: '16px' };
 
 function b64encode(str) {
   const bytes = new TextEncoder().encode(str);
@@ -145,6 +236,11 @@ createApp({
       tip: '',
       compressing: false,
       showSync: false,
+      showTheme: false,
+      presets: PRESETS,
+      theme: Object.assign({}, DEFAULT_THEME),
+      themeUpdatedAt: 0,
+      themeTimer: null,
       sync: { owner: '2329118415-lang', repo: 'micky-diary-data', file: 'diary.json', token: '' },
       form2: { owner: '2329118415-lang', repo: 'micky-diary-data', file: 'diary.json', token: '' },
       remoteSha: null,
@@ -171,8 +267,11 @@ createApp({
         const doc = JSON.parse(saved);
         this.list = doc.entries || [];
         this.deletedIds = doc.deletedIds || [];
+        if (doc.theme) this.theme = Object.assign({}, DEFAULT_THEME, doc.theme);
+        this.themeUpdatedAt = doc.themeUpdatedAt || 0;
       } catch (err) { this.list = []; }
     }
+    this.applyTheme();
     const cfg = localStorage.getItem(SYNC_KEY);
     if (cfg) {
       try {
@@ -189,6 +288,39 @@ createApp({
       const day = ('0' + d.getDate()).slice(-2);
       return d.getFullYear() + '-' + m + '-' + day;
     },
+    applyTheme() {
+      const root = document.documentElement;
+      root.style.setProperty('--accent', this.theme.accent);
+      root.style.setProperty('--bg', this.theme.bg);
+      root.style.setProperty('--card', this.theme.card);
+      root.style.setProperty('--text', this.theme.text);
+      root.style.setProperty('--radius', this.theme.radius + 'px');
+      root.style.setProperty('--font', FONT_MAP[this.theme.font] || FONT_MAP.system);
+      root.style.setProperty('--base', SIZE_MAP[this.theme.size] || SIZE_MAP.md);
+    },
+    onThemeInput() {
+      this.theme.radius = Number(this.theme.radius) || 0;
+      this.themeUpdatedAt = Date.now();
+      this.applyTheme();
+      this.persistLocal();
+      if (this.themeTimer) clearTimeout(this.themeTimer);
+      const self = this;
+      this.themeTimer = setTimeout(function () { if (self.syncReady) self.syncNow(); }, 1500);
+    },
+    applyPreset(p) {
+      this.theme = Object.assign({}, DEFAULT_THEME, p.theme);
+      this.themeUpdatedAt = Date.now();
+      this.applyTheme();
+      this.persistLocal();
+      if (this.syncReady) this.syncNow();
+    },
+    resetTheme() {
+      this.theme = Object.assign({}, DEFAULT_THEME);
+      this.themeUpdatedAt = Date.now();
+      this.applyTheme();
+      this.persistLocal();
+      if (this.syncReady) this.syncNow();
+    },
     login() {
       if (this.pwd === this.SECRET) {
         this.isLoggedIn = true;
@@ -203,10 +335,16 @@ createApp({
       this.pwd = '';
       this.keyword = '';
       this.showSync = false;
+      this.showTheme = false;
     },
     persistLocal() {
       try {
-        localStorage.setItem(DATA_KEY, JSON.stringify({ entries: this.list, deletedIds: this.deletedIds }));
+        localStorage.setItem(DATA_KEY, JSON.stringify({
+          entries: this.list,
+          deletedIds: this.deletedIds,
+          theme: this.theme,
+          themeUpdatedAt: this.themeUpdatedAt
+        }));
         return true;
       } catch (err) {
         this.tip = '本地保存失败（照片太大），换一张小一点的照片试试';
@@ -294,24 +432,44 @@ createApp({
         if (!old || (item.updatedAt || 0) >= (old.updatedAt || 0)) map[key] = item;
       });
       const entries = Object.keys(map).map((k) => map[k]).sort((a, b) => (a.date < b.date ? 1 : -1));
-      const same = JSON.stringify(entries) === JSON.stringify(remote.entries || []);
-      return { entries: entries, deletedIds: deletedIds, same: same };
+      const theme = (remote.themeUpdatedAt || 0) > (local.themeUpdatedAt || 0)
+        ? remote.theme
+        : (local.theme || remote.theme);
+      const themeUpdatedAt = Math.max(remote.themeUpdatedAt || 0, local.themeUpdatedAt || 0);
+      const same = JSON.stringify(entries) === JSON.stringify(remote.entries || [])
+        && JSON.stringify(theme || null) === JSON.stringify(remote.theme || null)
+        && JSON.stringify(deletedIds) === JSON.stringify(remote.deletedIds || []);
+      return { entries: entries, deletedIds: deletedIds, theme: theme, themeUpdatedAt: themeUpdatedAt, same: same };
     },
     async pushRemote() {
-      const doc = { updatedAt: Date.now(), entries: this.list, deletedIds: this.deletedIds };
+      const doc = {
+        updatedAt: Date.now(),
+        entries: this.list,
+        deletedIds: this.deletedIds,
+        theme: this.theme,
+        themeUpdatedAt: this.themeUpdatedAt
+      };
       const body = { message: 'sync diary ' + new Date().toISOString(), content: b64encode(JSON.stringify(doc)) };
       if (this.remoteSha) body.sha = this.remoteSha;
       const data = await this.gh(this.docPath(), { method: 'PUT', body: JSON.stringify(body) });
       this.remoteSha = data.content ? data.content.sha : this.remoteSha;
     },
     async syncNow() {
-      if (!this.syncReady) { this.showSync = true; this.syncMsg = '请先填写同步设置'; return; }
+      if (!this.syncReady) { this.showSync = true; this.showTheme = false; this.syncMsg = '请先填写同步设置'; return; }
       this.syncMsg = '同步中…';
       try {
         const remote = await this.pullRemote();
-        const merged = this.mergeDocs({ entries: this.list, deletedIds: this.deletedIds }, remote);
+        const merged = this.mergeDocs({
+          entries: this.list,
+          deletedIds: this.deletedIds,
+          theme: this.theme,
+          themeUpdatedAt: this.themeUpdatedAt
+        }, remote);
         this.list = merged.entries;
         this.deletedIds = merged.deletedIds;
+        this.theme = Object.assign({}, DEFAULT_THEME, merged.theme || {});
+        this.themeUpdatedAt = merged.themeUpdatedAt;
+        this.applyTheme();
         this.persistLocal();
         if (!merged.same || !this.remoteSha) await this.pushRemote();
         this.syncMsg = '✅ 已同步 · ' + new Date().toLocaleTimeString();
@@ -371,7 +529,6 @@ createApp({
       if (this.syncReady) this.syncNow();
     },
     compressImage(file) {
-      const self = this;
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
