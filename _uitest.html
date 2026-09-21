@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
@@ -12,6 +12,18 @@
 <link rel="icon" href="./icon.svg" type="image/svg+xml" />
 <title>Micky的生活日记</title>
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script>
+try {
+  localStorage.setItem('micky-diary-data', JSON.stringify({
+    entries: [
+      { id: 1726900000000, date: '2026-09-21', title: '样式检查示例 · 置顶', content: '这是一条用于检查界面的假数据，看完就删。#测试 #界面', mood: '开心', weather: '晴', photos: [], tags: ['测试','界面'], pinned: true, updatedAt: 1726900000000 },
+      { id: 1726800000000, date: '2026-09-18', title: '第二条测试记录', content: '日历热力、标签筛选、卡片阴影都在这里看。#测试', mood: '平静', weather: '多云', photos: [], tags: ['测试'], pinned: false, updatedAt: 1726800000000 },
+      { id: 1726700000000, date: '2026-09-10', title: '第三条', content: '顶部月历里的日期格子应该有几个被着色。', mood: '疲惫', weather: '小雨', photos: [], tags: [], pinned: false, updatedAt: 1726700000000 }
+    ],
+    deletedIds: [], theme: null, themeUpdatedAt: 0
+  }));
+} catch (e) {}
+</script>
 <style>
   :root {
     --accent: #2b6cff;
@@ -88,9 +100,9 @@
   .stat b { font-size: 1.35em; font-weight: 700; }
   .stat span { font-size: .78em; color: var(--muted); display: block; }
 
-  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; max-width: 460px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
   .cal-wd { text-align: center; font-size: .72em; color: var(--muted); padding-bottom: 2px; }
-  .cal-cell { position: relative; aspect-ratio: 1 / 1; max-height: 46px; border-radius: 9px; border: 1px solid transparent; display: grid; place-items: center;
+  .cal-cell { position: relative; aspect-ratio: 1 / 1; border-radius: 9px; border: 1px solid transparent; display: grid; place-items: center;
     font-size: .8em; cursor: pointer; transition: transform .15s ease, border-color .18s ease, box-shadow .18s ease; color: var(--text); }
   .cal-cell:hover { transform: translateY(-2px); border-color: var(--accent); }
   .cal-cell.out { opacity: .35; }
@@ -532,7 +544,7 @@ createApp({
     return {
       SECRET: '051222520',
       pwd: '',
-      isLoggedIn: false,
+      isLoggedIn: true,
       errorMsg: '',
       keyword: '',
       tip: '',
@@ -1280,3 +1292,4 @@ createApp({
 </script>
 </body>
 </html>
+
