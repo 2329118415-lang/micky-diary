@@ -73,10 +73,11 @@
       <div class="row"><label>账号</label><input v-model="form2.owner" placeholder="GitHub 用户名" /></div>
       <div class="row"><label>数据仓库</label><input v-model="form2.repo" placeholder="micky-diary-data" /></div>
       <div class="row"><label>文件名</label><input v-model="form2.file" placeholder="diary.json" /></div>
-      <div class="row"><label>访问令牌</label><input type="password" v-model="form2.token" placeholder="粘贴只对该仓库有读写权限的 fine-grained token" /></div>
-      <button class="primary" @click="enableSync">保存并开始同步</button>
+      <div class="row"><label>访问令牌</label><input type="password" v-model="form2.token" placeholder="粘贴 github_pat_ 开头的令牌，前后不要带空格" /></div>
+      <button @click="checkToken">检测密钥</button>
+      <button class="primary" @click="enableSync" style="margin-left:10px;">保存并开始同步</button>
       <button v-if="syncReady" @click="disableSync" style="margin-left:10px;">断开同步</button>
-      <p class="status">令牌只保存在这台设备的浏览器里，不会写进网页源码。</p>
+      <p class="status">令牌只保存在这台设备的浏览器里，不会写进网页源码。第一次建议先点「检测密钥」，看到 ✅ 再保存。</p>
     </section>
 
     <section class="editor">
@@ -217,19 +218,59 @@ createApp({
     },
     async gh(path, options) {
       const opt = options || {};
+      const token = String(this.sync.token || '').trim();
       const headers = Object.assign({
-        'Authorization': 'Bearer ' + this.sync.token,
+        'Authorization': 'Bearer ' + token,
         'Accept': 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28'
       }, opt.headers || {});
       const res = await fetch('https://api.github.com' + path, Object.assign({}, opt, { headers: headers }));
       if (!res.ok) {
-        const text = await res.text();
-        const err = new Error('HTTP ' + res.status + ' ' + text.slice(0, 160));
+        let hint = '';
+        if (res.status === 401) hint = '密钥无效（401 Bad credentials）：多为没粘贴上、复制不完整、带了空格/换行，或密钥已被删除或过期，请重新生成一个再试';
+        else if (res.status === 403) hint = '权限不足（403）：把 Repository permissions → Contents 改成 Read and write 后重新生成密钥';
+        else if (res.status === 404) hint = '找不到仓库（404）：确认仓库名是 micky-diary-data，并且密钥的 Repository access 里勾选了它';
+        else hint = 'HTTP ' + res.status + ' ' + (await res.text()).slice(0, 120);
+        const err = new Error(hint);
         err.status = res.status;
         throw err;
       }
       return res.json();
+    },
+    tokenLooksValid(token) {
+      const t = String(token || '').trim();
+      return t.indexOf('github_pat_') === 0 || t.indexOf('ghp_') === 0 || t.indexOf('gho_') === 0 || t.indexOf('ghu_') === 0;
+    },
+    async checkToken() {
+      this.normalizeForm2();
+      this.sync = Object.assign({}, this.form2);
+      if (!this.form2.token) { this.syncMsg = '⚠️ 访问令牌是空的，请先把 github_pat_... 那串粘贴进来'; return; }
+      if (!this.tokenLooksValid(this.form2.token)) {
+        this.syncMsg = '⚠️ 这串不像 GitHub 令牌（应以 github_pat_ 或 ghp_ 开头，当前长度 ' + this.form2.token.length + ' 个字符），请确认复制的是令牌本身，不是令牌名字';
+        return;
+      }
+      this.syncMsg = '正在检测密钥…';
+      try {
+        const me = await this.gh('/user');
+        let extra = '';
+        if (this.form2.owner && this.form2.repo) {
+          try {
+            await this.gh('/repos/' + this.form2.owner + '/' + this.form2.repo);
+            extra = '，并且能访问仓库 ' + this.form2.owner + '/' + this.form2.repo;
+          } catch (err2) {
+            extra = '，但仓库检查没通过 → ' + err2.message;
+          }
+        }
+        this.syncMsg = '✅ 密钥有效，属于账号 ' + me.login + '（长度 ' + this.form2.token.length + ' 字符）' + extra;
+      } catch (err) {
+        this.syncMsg = '⚠️ ' + err.message;
+      }
+    },
+    normalizeForm2() {
+      this.form2.owner = String(this.form2.owner || '').trim().replace(/^@/, '');
+      this.form2.repo = String(this.form2.repo || '').trim();
+      this.form2.file = String(this.form2.file || '').trim() || 'diary.json';
+      this.form2.token = String(this.form2.token || '').trim();
     },
     async pullRemote() {
       try {
@@ -279,8 +320,13 @@ createApp({
       }
     },
     async enableSync() {
+      this.normalizeForm2();
+      if (!this.form2.token) { this.syncMsg = '⚠️ 访问令牌是空的，请先把 github_pat_... 那串粘贴进来再保存'; return; }
+      if (!this.tokenLooksValid(this.form2.token)) {
+        this.syncMsg = '⚠️ 这串不像 GitHub 令牌（应以 github_pat_ 或 ghp_ 开头，当前长度 ' + this.form2.token.length + ' 个字符），请确认复制的是令牌本身，不是令牌名字';
+        return;
+      }
       this.sync = Object.assign({}, this.form2);
-      localStorage.setItem(SYNC_KEY, JSON.stringify(this.sync));
       this.syncMsg = '正在连接…';
       try {
         await this.gh('/repos/' + this.sync.owner + '/' + this.sync.repo);
@@ -288,6 +334,7 @@ createApp({
         this.syncMsg = '⚠️ 连接失败：' + err.message;
         return;
       }
+      localStorage.setItem(SYNC_KEY, JSON.stringify(this.sync));
       this.showSync = false;
       await this.syncNow();
     },
